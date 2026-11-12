@@ -66,7 +66,8 @@ public class AiService {
         try {
             return objectMapper.readTree(text);
         } catch (JsonProcessingException e) {
-            log.error("AI JSON 파싱 실패: {}", text);
+            // 응답 원문에 사용자 건강 정보가 섞일 수 있어 길이만 남긴다
+            log.error("AI JSON 파싱 실패 (응답 길이 {}자): {}", text.length(), e.getOriginalMessage());
             throw new BusinessException(ErrorCode.AI_ERROR);
         }
     }
