@@ -67,7 +67,11 @@ public class AiService {
             return objectMapper.readTree(text);
         } catch (JsonProcessingException e) {
             // 응답 원문에 사용자 건강 정보가 섞일 수 있어 길이만 남긴다
-            log.error("AI JSON 파싱 실패 (응답 길이 {}자): {}", text.length(), e.getOriginalMessage());
+            // Jackson 에러 메시지도 토큰 원문을 담을 수 있어 위치 정보만 남긴다
+            log.error("AI JSON 파싱 실패: {} (응답 길이 {}자, line {}, column {})",
+                    e.getClass().getSimpleName(), text.length(),
+                    e.getLocation() == null ? -1 : e.getLocation().getLineNr(),
+                    e.getLocation() == null ? -1 : e.getLocation().getColumnNr());
             throw new BusinessException(ErrorCode.AI_ERROR);
         }
     }
