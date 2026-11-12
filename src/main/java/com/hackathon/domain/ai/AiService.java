@@ -5,12 +5,19 @@ import com.anthropic.client.okhttp.AnthropicOkHttpClient;
 import com.anthropic.errors.AnthropicIoException;
 import com.anthropic.errors.AnthropicServiceException;
 import com.anthropic.errors.RateLimitException;
+import com.anthropic.core.JsonValue;
+import com.anthropic.models.messages.JsonOutputFormat;
 import com.anthropic.models.messages.Message;
 import com.anthropic.models.messages.MessageCreateParams;
 import com.anthropic.models.messages.OutputConfig;
 import com.anthropic.models.messages.StopReason;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hackathon.global.error.BusinessException;
 import com.hackathon.global.error.ErrorCode;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,32 +30,59 @@ public class AiService {
     private final AnthropicClient client; // 키 없으면 null
     private final String model;
     private final OutputConfig.Effort effort;
+    private final ObjectMapper objectMapper;
 
-    public AiService(@Value("${anthropic.api-key:}") String apiKey,
+    public AiService(ObjectMapper objectMapper,
+                     @Value("${anthropic.api-key:}") String apiKey,
                      @Value("${anthropic.model}") String model,
                      @Value("${anthropic.effort}") String effort) {
         this.client = apiKey.isBlank() ? null : AnthropicOkHttpClient.builder().apiKey(apiKey).build();
         this.model = model;
         this.effort = OutputConfig.Effort.of(effort);
+        this.objectMapper = objectMapper;
         if (client == null) {
             log.warn("ANTHROPIC_API_KEY 미설정: /api/ai/* 는 503을 반환합니다.");
         }
     }
 
     public AiDto.ChatResponse chat(AiDto.ChatRequest req) {
+        MessageCreateParams.Builder params = baseParams(req.system(), req.history(), req.message());
+        params.outputConfig(OutputConfig.builder().effort(effort).build());
+        return new AiDto.ChatResponse(call(params));
+    }
+
+    /** schema에 맞는 JSON만 반환하도록 강제 (structured outputs). */
+    public JsonNode json(AiDto.JsonRequest req) {
+        MessageCreateParams.Builder params = baseParams(req.system(), req.history(), req.message());
+        Map<String, Object> schema = JsonSchemas.strict(req.schema());
+        JsonOutputFormat.Schema.Builder schemaBuilder = JsonOutputFormat.Schema.builder();
+        schema.forEach((k, v) -> schemaBuilder.putAdditionalProperty(k, JsonValue.from(v)));
+        params.outputConfig(OutputConfig.builder()
+                .effort(effort)
+                .format(JsonOutputFormat.builder().schema(schemaBuilder.build()).build())
+                .build());
+
+        String text = call(params);
+        try {
+            return objectMapper.readTree(text);
+        } catch (JsonProcessingException e) {
+            log.error("AI JSON 파싱 실패: {}", text);
+            throw new BusinessException(ErrorCode.AI_ERROR);
+        }
+    }
+
+    private MessageCreateParams.Builder baseParams(String system, List<AiDto.Turn> history, String message) {
         if (client == null) {
             throw new BusinessException(ErrorCode.AI_NOT_CONFIGURED);
         }
-
         MessageCreateParams.Builder params = MessageCreateParams.builder()
                 .model(model)
-                .maxTokens(16000L)
-                .outputConfig(OutputConfig.builder().effort(effort).build());
-        if (req.system() != null && !req.system().isBlank()) {
-            params.system(req.system());
+                .maxTokens(16000L);
+        if (system != null && !system.isBlank()) {
+            params.system(system);
         }
-        if (req.history() != null) {
-            for (AiDto.Turn t : req.history()) {
+        if (history != null) {
+            for (AiDto.Turn t : history) {
                 if ("assistant".equals(t.role())) {
                     params.addAssistantMessage(t.content());
                 } else {
@@ -56,8 +90,11 @@ public class AiService {
                 }
             }
         }
-        params.addUserMessage(req.message());
+        params.addUserMessage(message);
+        return params;
+    }
 
+    private String call(MessageCreateParams.Builder params) {
         Message response;
         try {
             response = client.messages().create(params.build());
@@ -72,10 +109,9 @@ public class AiService {
             throw new BusinessException(ErrorCode.AI_REFUSED);
         }
 
-        String text = response.content().stream()
+        return response.content().stream()
                 .flatMap(block -> block.text().stream())
                 .map(t -> t.text())
                 .collect(Collectors.joining());
-        return new AiDto.ChatResponse(text);
     }
 }

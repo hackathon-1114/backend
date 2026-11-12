@@ -53,6 +53,21 @@ curl -X POST localhost:8080/api/ai/chat -H 'Content-Type: application/json' -d '
 # → { "success": true, "data": { "reply": "..." } }
 ```
 
+프론트가 화면에 바로 쓸 구조화된 데이터가 필요하면 `/api/ai/json`에 원하는 모양(`schema`)을 같이 보낸다. `required`와 `additionalProperties`는 생략해도 서버가 채운다.
+
+```bash
+curl -X POST localhost:8080/api/ai/json -H 'Content-Type: application/json' -d '{
+  "system": "너는 증상 분류 도우미야. 진단이 아니라 참고용 안내만 해.",
+  "message": "이틀째 38도 열이 나고 목이 많이 아파",
+  "schema": { "properties": {
+    "risk": { "type": "string", "enum": ["낮음", "보통", "높음"] },
+    "department": { "type": "string" },
+    "tips": { "type": "array", "items": { "type": "string" } }
+  }}
+}'
+# → { "success": true, "data": { "risk": "보통", "department": "이비인후과 또는 내과", "tips": [...] } }
+```
+
 - 챗봇처럼 이어가려면 이전 대화를 `history`에 `{role: "user"|"assistant", content}`로 넣어 보낸다
 - 모델/속도는 환경변수 `ANTHROPIC_MODEL`(기본 `claude-opus-5-5`), `ANTHROPIC_EFFORT`(기본 `low`)
 - 키가 없으면 `AI503`, 한도 초과는 `AI429`

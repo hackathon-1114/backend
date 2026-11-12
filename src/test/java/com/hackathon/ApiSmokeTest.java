@@ -60,6 +60,13 @@ class ApiSmokeTest {
     }
 
     @Test
+    void aiJsonValidatesSchema() throws Exception {
+        mvc.perform(post("/api/ai/json").contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"hi\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.data.schema").exists());
+    }
+
+    @Test
     void swaggerDocs() throws Exception {
         mvc.perform(get("/v3/api-docs")).andExpect(status().isOk());
     }

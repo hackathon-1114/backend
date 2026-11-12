@@ -2,8 +2,10 @@ package com.hackathon.domain.ai;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import java.util.List;
+import java.util.Map;
 
 public class AiDto {
 
@@ -24,5 +26,17 @@ public class AiDto {
     }
 
     public record ChatResponse(String reply) {
+    }
+
+    /**
+     * @param schema 받고 싶은 응답 모양 (JSON Schema). required/additionalProperties는 생략해도 서버가 채움.
+     *               예: {"properties": {"risk": {"type": "string", "enum": ["낮음","보통","높음"]},
+     *                                  "department": {"type": "string"}}}
+     */
+    public record JsonRequest(
+            String system,
+            @NotBlank String message,
+            List<@Valid Turn> history,
+            @NotEmpty Map<String, Object> schema) {
     }
 }

@@ -1,5 +1,6 @@
 package com.hackathon.domain.ai;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.hackathon.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,5 +23,11 @@ public class AiController {
     @PostMapping("/chat")
     public ApiResponse<AiDto.ChatResponse> chat(@Valid @RequestBody AiDto.ChatRequest req) {
         return ApiResponse.ok(aiService.chat(req));
+    }
+
+    @Operation(summary = "JSON 응답", description = "schema 모양 그대로의 JSON을 data로 반환")
+    @PostMapping("/json")
+    public ApiResponse<JsonNode> json(@Valid @RequestBody AiDto.JsonRequest req) {
+        return ApiResponse.ok(aiService.json(req));
     }
 }
