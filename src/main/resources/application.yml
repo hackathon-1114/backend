@@ -1,5 +1,7 @@
 server:
   port: ${PORT:8080}
+  # Railway 같은 HTTPS 프록시 뒤에서 Swagger가 https 주소로 호출하도록 X-Forwarded-* 헤더를 반영
+  forward-headers-strategy: framework
 
 spring:
   application:

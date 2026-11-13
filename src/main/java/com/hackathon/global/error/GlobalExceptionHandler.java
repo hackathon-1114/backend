@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -43,6 +44,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleUnknown(Exception e) {
+        // 405, 415, 필수 헤더/파라미터 누락 같은 스프링 표준 예외는 500이 아니라 제 상태코드로 내려준다
+        if (e instanceof ErrorResponse standard) {
+            int status = standard.getStatusCode().value();
+            return ResponseEntity.status(status)
+                    .body(ApiResponse.fail("COMMON" + status, e.getMessage(), null));
+        }
         log.error("Unhandled exception", e);
         return toResponse(ErrorCode.INTERNAL_ERROR, null);
     }
