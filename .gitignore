@@ -9,3 +9,7 @@ bin/
 .env
 *.log
 data/
+.classpath
+.project
+.factorypath
+.settings/
