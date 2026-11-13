@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.Map;
 
@@ -17,13 +18,28 @@ public class AiDto {
     public record ChatRequest(
             String system,
             @NotBlank String message,
-            List<@Valid Turn> history) {
+            List<@Valid Turn> history,
+            @Size(max = 5) List<@Valid Image> images) {
     }
 
     public record Turn(
             @Pattern(regexp = "user|assistant") String role,
             @NotBlank String content) {
     }
+
+    /**
+     * 이번 message와 함께 보낼 사진 (선택). 예: 약 봉투, 처방전, 식단 사진.
+     *
+     * @param mediaType image/jpeg, image/png, image/gif, image/webp 중 하나
+     * @param data      base64 문자열. "data:image/png;base64,..." 형태로 보내도 됨. 원본 5MB 이하
+     */
+    public record Image(
+            @NotBlank @Pattern(regexp = "image/(jpeg|png|gif|webp)") String mediaType,
+            @NotBlank @Size(max = MAX_IMAGE_BASE64_LENGTH, message = "이미지는 5MB 이하여야 합니다.") String data) {
+    }
+
+    /** 5MB를 base64로 인코딩한 길이 + data URL 접두어 여유분 */
+    static final int MAX_IMAGE_BASE64_LENGTH = 6_990_600;
 
     public record ChatResponse(String reply) {
     }
@@ -37,6 +53,7 @@ public class AiDto {
             String system,
             @NotBlank String message,
             List<@Valid Turn> history,
+            @Size(max = 5) List<@Valid Image> images,
             @NotEmpty Map<String, Object> schema) {
     }
 }

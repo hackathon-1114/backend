@@ -2,6 +2,7 @@ package com.hackathon;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -64,6 +65,21 @@ class ApiSmokeTest {
         mvc.perform(post("/api/ai/json").contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"hi\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.data.schema").exists());
+    }
+
+    @Test
+    void aiRejectsUnsupportedImageType() throws Exception {
+        mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"message\":\"이게 뭐야?\",\"images\":[{\"mediaType\":\"application/pdf\",\"data\":\"AAAA\"}]}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.data['images[0].mediaType']").exists());
+    }
+
+    @Test
+    void wrongMethodReturns405NotServerError() throws Exception {
+        mvc.perform(put("/api/samples"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.code").value("COMMON405"));
     }
 
     @Test

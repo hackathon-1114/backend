@@ -31,7 +31,9 @@ API 키는 프로젝트 루트 `.env`에 `ANTHROPIC_API_KEY=sk-ant-...` 한 줄�
 { "success": false, "code": "SAMPLE404", "message": "샘플을 찾을 수 없습니다." }
 ```
 
-검증 실패(400)는 `data`에 `{ 필드명: 메시지 }`가 들어간다.
+검증 실패(400)는 `data`에 `{ 필드명: 메시지 }`가 들어간다. 잘못된 메서드나 필수 헤더 누락은 `COMMON405`, `COMMON400`처럼 상태코드가 붙은 코드로 내려간다.
+
+`/api` 요청은 `POST /api/samples → 201 (12ms)` 형태로 서버 로그에 한 줄씩 남는다. 프론트 연동이 안 될 때 배포 로그에서 먼저 확인한다.
 
 ## 현장에서 새 도메인 추가하는 법
 
@@ -68,9 +70,24 @@ curl -X POST localhost:8080/api/ai/json -H 'Content-Type: application/json' -d '
 # → { "success": true, "data": { "risk": "보통", "department": "이비인후과 또는 내과", "tips": [...] } }
 ```
 
+사진을 같이 보내려면 두 엔드포인트 모두 `images`에 base64를 넣는다 (약 봉투, 처방전, 식단 사진 등). multipart가 아니라 JSON 그대로다.
+
+```bash
+curl -X POST localhost:8080/api/ai/json -H 'Content-Type: application/json' -d '{
+  "message": "이 약 봉투에 적힌 약 이름과 복용법을 정리해줘",
+  "images": [{ "mediaType": "image/jpeg", "data": "<base64 또는 data:image/jpeg;base64,...>" }],
+  "schema": { "properties": {
+    "drugs": { "type": "array", "items": { "properties": {
+      "name": { "type": "string" }, "howToTake": { "type": "string" } } } }
+  }}
+}'
+```
+
 - 챗봇처럼 이어가려면 이전 대화를 `history`에 `{role: "user"|"assistant", content}`로 넣어 보낸다
-- 모델/속도는 환경변수 `ANTHROPIC_MODEL`(기본 `claude-opus-5-5`), `ANTHROPIC_EFFORT`(기본 `low`)
-- 키가 없으면 `AI503`, 한도 초과는 `AI429`
+- `images`는 요청당 최대 5장, 장당 원본 5MB 이하, `image/jpeg|png|gif|webp`. 프론트의 `FileReader.readAsDataURL` 결과를 그대로 넣어도 된다
+- 모델/속도는 환경변수 `ANTHROPIC_MODEL`(기본 `claude-opus-5-5`, 더 빠르게는 `claude-sonnet-5-5`나 `claude-haiku-5-5`), `ANTHROPIC_EFFORT`(기본 `low`)
+- 안전 분류기가 요청을 거절하면 서버가 대체 모델로 자동 재시도한다. 그래도 거절되면 `AI422`
+- 키가 없으면 `AI503`, 한도 초과는 `AI429`, 그 밖의 호출 실패(잔액 부족 포함)는 `AI502`이고 원인은 서버 로그에 남는다
 
 ## 배포 (Railway 기준)
 
