@@ -85,7 +85,8 @@ curl -X POST localhost:8080/api/ai/json -H 'Content-Type: application/json' -d '
 
 - 챗봇처럼 이어가려면 이전 대화를 `history`에 `{role: "user"|"assistant", content}`로 넣어 보낸다
 - `images`는 요청당 최대 5장, 장당 원본 5MB 이하, `image/jpeg|png|gif|webp`. 프론트의 `FileReader.readAsDataURL` 결과를 그대로 넣어도 된다
-- 모델/속도는 환경변수 `ANTHROPIC_MODEL`(기본 `claude-opus-5-5`, 더 빠르게는 `claude-sonnet-5-5`나 `claude-haiku-5-5`), `ANTHROPIC_EFFORT`(기본 `low`)
+- 요청마다 `"model": "opus" | "sonnet" | "haiku"`로 모델을 고를 수 있다. 생략하면 서버 기본값을 쓴다
+- 서버 기본값은 환경변수 `ANTHROPIC_MODEL`(기본 `claude-opus-5-5`), 속도는 `ANTHROPIC_EFFORT`(기본 `low`)
 - 안전 분류기가 요청을 거절하면 서버가 대체 모델로 자동 재시도한다. 그래도 거절되면 `AI422`
 - 키가 없으면 `AI503`, 한도 초과는 `AI429`, 그 밖의 호출 실패(잔액 부족 포함)는 `AI502`이고 원인은 서버 로그에 남는다
 

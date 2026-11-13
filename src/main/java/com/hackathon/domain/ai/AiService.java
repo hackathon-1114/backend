@@ -31,6 +31,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class AiService {
 
+    /** 요청의 model 별칭 → 실제 모델 ID. 화면마다 속도와 정확도를 골라 쓰게 한다. */
+    private static final Map<String, String> MODELS = Map.of(
+            "opus", "claude-opus-5-5",
+            "sonnet", "claude-sonnet-5-5",
+            "haiku", "claude-haiku-5-5");
+
     private final AnthropicClient client; // 키 없으면 null
     private final String model;
     private final BetaOutputConfig.Effort effort;
@@ -55,14 +61,14 @@ public class AiService {
     }
 
     public AiDto.ChatResponse chat(AiDto.ChatRequest req) {
-        MessageCreateParams.Builder params = baseParams(req.system(), req.history(), req.message(), req.images());
+        MessageCreateParams.Builder params = baseParams(req.model(), req.system(), req.history(), req.message(), req.images());
         params.outputConfig(BetaOutputConfig.builder().effort(effort).build());
         return new AiDto.ChatResponse(call(params));
     }
 
     /** schema에 맞는 JSON만 반환하도록 강제 (structured outputs). */
     public JsonNode json(AiDto.JsonRequest req) {
-        MessageCreateParams.Builder params = baseParams(req.system(), req.history(), req.message(), req.images());
+        MessageCreateParams.Builder params = baseParams(req.model(), req.system(), req.history(), req.message(), req.images());
         Map<String, Object> schema = JsonSchemas.strict(req.schema());
         BetaJsonOutputFormat.Schema.Builder schemaBuilder = BetaJsonOutputFormat.Schema.builder();
         schema.forEach((k, v) -> schemaBuilder.putAdditionalProperty(k, JsonValue.from(v)));
@@ -85,13 +91,13 @@ public class AiService {
         }
     }
 
-    MessageCreateParams.Builder baseParams(String system, List<AiDto.Turn> history, String message,
-                                           List<AiDto.Image> images) {
+    MessageCreateParams.Builder baseParams(String modelAlias, String system, List<AiDto.Turn> history,
+                                           String message, List<AiDto.Image> images) {
         if (client == null) {
             throw new BusinessException(ErrorCode.AI_NOT_CONFIGURED);
         }
         MessageCreateParams.Builder params = MessageCreateParams.builder()
-                .model(model)
+                .model(modelAlias == null ? model : MODELS.get(modelAlias))
                 .maxTokens(16000L)
                 // 안전 분류기가 거절하면 서버가 권장 대체 모델로 같은 요청을 다시 실행한다
                 .addBeta(AnthropicBeta.SERVER_SIDE_FALLBACK_2026_07_01)

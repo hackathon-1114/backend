@@ -16,15 +16,23 @@ class AiServiceTest {
 
     @Test
     void everyRequestOptsIntoRefusalFallback() {
-        MessageCreateParams params = service.baseParams(null, null, "안녕", null).build();
+        MessageCreateParams params = service.baseParams(null, null, null, "안녕", null).build();
 
         assertThat(params.fallbacks()).hasValueSatisfying(f -> assertThat(f.isDefault()).isTrue());
         assertThat(params.betas().orElseThrow()).contains(AnthropicBeta.SERVER_SIDE_FALLBACK_2026_07_01);
     }
 
     @Test
+    void modelAliasOverridesServerDefault() {
+        assertThat(service.baseParams("haiku", null, null, "안녕", null).build().model().asString())
+                .isEqualTo("claude-haiku-5-5");
+        assertThat(service.baseParams(null, null, null, "안녕", null).build().model().asString())
+                .isEqualTo("claude-opus-5-5");
+    }
+
+    @Test
     void imagesGoBeforeTextAndDataUrlPrefixIsStripped() {
-        MessageCreateParams params = service.baseParams(null,
+        MessageCreateParams params = service.baseParams(null, null,
                 List.of(new AiDto.Turn("user", "이전 질문"), new AiDto.Turn("assistant", "이전 답")),
                 "이 약 뭐야?",
                 List.of(new AiDto.Image("image/png", "data:image/png;base64,AAAA"))).build();
