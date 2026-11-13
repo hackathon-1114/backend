@@ -10,7 +10,9 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 ./gradlew bootRun    # http://localhost:8080/swagger-ui.html
 ```
 
-`master`에 푸시하면 Railway가 자동 배포한다. 푸시 전에 테스트를 통과시킨다.
+`master`에 푸시하면 Railway가 1~2분 안에 자동 배포한다. 배포 주소는 https://hackathon-backend-production-967eabf5.up.railway.app 이다.
+
+변경 요청을 받으면 구현하고 `./gradlew test` 통과를 확인한 뒤, 묻지 않고 커밋해서 `origin/master`에 푸시한다. 푸시 후에는 배포 주소에서 바뀐 엔드포인트를 호출해 확인한다. 테스트가 실패하면 푸시하지 않고 보고한다. force push와 히스토리 수정은 하지 않는다.
 
 ## 새 도메인 추가
 
