@@ -109,6 +109,9 @@ input[type=text], input[type=number] {
 .finding .state { font-size: 13px; color: var(--sub); }
 .finding ul { margin: 6px 0 0; padding-left: 18px; font-size: 14px; }
 .finding p { font-size: 14px; margin-top: 4px; }
+/* 근거. 본문보다 한 단계 물러나 있게 연한 글씨와 꺾인 화살표로 표시한다 */
+.finding p.why { color: var(--sub); font-size: 13px; line-height: 1.5; margin-top: 8px; padding-left: 18px; position: relative; }
+.finding p.why::before { content: '↳'; position: absolute; left: 1px; top: -1px; font-size: 14px; color: #9AA2A0; }
 
 /* 반복 깊이 그래프 */
 .repchart { display: block; width: 100%; height: auto; margin-top: 18px; font-family: var(--body); }
@@ -116,7 +119,7 @@ input[type=text], input[type=number] {
 .ring { width: 76px; height: 76px; display: block; font-family: var(--body); }
 .ringrow strong { display: block; font-size: 16px; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--sub); margin-top: 8px; }
-.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; background: var(--blue); vertical-align: -1px; }
+.legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 6px; background: var(--blue); vertical-align: 3px; }
 .legend i.red { background: var(--red); }
 .multiples { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
 .multiples figure { margin: 0; }
@@ -141,6 +144,7 @@ input[type=text], input[type=number] {
 .stage { position: relative; background: #000; min-height: 220px; }
 .stage video, .stage canvas { width: 100%; display: block; }
 .stage canvas { position: absolute; left: 0; top: 0; height: 100%; }
+.stage.mirror video, .stage.mirror canvas { transform: scaleX(-1); }
 .live { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; }
 .live .count { font-weight: 800; font-size: 64px; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; min-width: 72px; }
 .live .cue { font-weight: 700; font-size: 18px; min-height: 28px; }
@@ -152,6 +156,6 @@ th { color: var(--sub); }
 td:first-child, th:first-child, td:last-child, th:last-child { text-align: left; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .repchart .grow { animation: grow .45s cubic-bezier(.2, .8, .2, 1) backwards; transform-origin: bottom; transform-box: fill-box; }
-  @keyframes grow { from { transform: scaleY(0); } }
+  .repchart { animation: reveal .6s ease-out backwards; }
+  @keyframes reveal { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 }

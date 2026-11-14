@@ -5,11 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MUSCLE MAP</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="stylesheet" href="/app.css?v=4">
+<link rel="stylesheet" href="/app.css?v=7">
 <style>
-  details { margin-top: 6px; }
-  details summary { font-size: 13px; color: var(--sub); cursor: pointer; }
-  details p { font-size: 14px; }
   .goals { list-style: none; padding: 0; margin: 10px 0 0; }
   .goals li { padding: 10px 0 10px 28px; border-top: 1px solid var(--rule); position: relative; font-size: 15px; }
   .goals li::before { content: ''; position: absolute; left: 2px; top: 14px; width: 14px; height: 14px; border: 1.5px solid var(--ink); border-radius: 3px; }
@@ -39,7 +36,7 @@
     </div>
     <div class="sheet" id="homeHistory" hidden>
       <h2>최근 세트를 나란히 보면</h2>
-      <p class="sub">막대가 낮을수록 덜 앉은 것입니다.</p>
+      <p class="sub">선이 내려갈수록 덜 앉은 것입니다.</p>
       <div class="multiples" id="multiples"></div>
     </div>
     <div class="sheet">
@@ -128,7 +125,7 @@
   <a href="#result" data-tab="result">결과</a>
 </div></nav>
 
-<script src="/app.js?v=4"></script>
+<script src="/app.js?v=6"></script>
 <script>
 const { $, api, el, finding, repChart, when } = MM;
 
@@ -152,11 +149,7 @@ function showInsights(items) {
   box.replaceChildren();
   if (!items.length) { box.append(el('p', '세트가 쌓이면 여기에서 반복되는 패턴을 찾아 드립니다.', 'sub')); return; }
   items.forEach(p => {
-    const row = finding('blue', p.title, null, [p.suggestion]);
-    const more = el('details');
-    more.append(el('summary', '근거 보기'), el('p', p.evidence));
-    row.lastChild.append(more);
-    box.append(row);
+    box.append(finding('blue', p.title, null, [p.suggestion], null, p.evidence));
   });
 }
 
@@ -228,11 +221,7 @@ function showInbody(r) {
 function showAlert(a) {
   const colors = { '추가 확인 권장': 'red', '측정 필요': 'yellow', '참고': 'blue' };
   $('alertView').replaceChildren(...a.areas.map(area => {
-    const row = finding(colors[area.status] || 'blue', area.title, area.side + ' ' + area.bodyPart + ', ' + area.status, [], area.checkPatterns);
-    const more = el('details');
-    more.append(el('summary', '왜 이 영역인가요'), el('p', area.reason));
-    row.lastChild.append(more);
-    return row;
+    return finding(colors[area.status] || 'blue', area.title, area.side + ' ' + area.bodyPart + ', ' + area.status, [], area.checkPatterns, area.reason);
   }));
 }
 
@@ -291,7 +280,7 @@ function showSet(set) {
     figure('후반 앉은 깊이', signed(-Math.round(st.depthChange * 100)), '%p'),
     figure('후반 한 회 시간', signed(Math.round(st.tempoChangePct)), '%'),
     figure('후반 상체 기울기', signed(Math.round(st.leanChange)), '도'));
-  $('resultNote').textContent = '막대는 한 번 앉을 때 엉덩이가 내려간 깊이입니다. 높을수록 깊이 앉은 것이고, 수치는 세트 앞부분과 뒷부분의 차이입니다.'
+  $('resultNote').textContent = '선은 한 번 앉을 때 엉덩이가 내려간 깊이입니다. 높을수록 깊이 앉은 것이고, 아래 수치는 세트 앞부분과 뒷부분의 차이입니다.'
     + (set.emg && set.emg.simulated ? ' 근육 활성 값은 센서가 없어 시뮬레이션이며 판단에 쓰지 않았습니다.' : '');
 
   $('analysisSheet').hidden = false;
@@ -315,20 +304,12 @@ function showSet(set) {
   }
   obs.append(el('p', f.summary));
   f.observations.forEach(o => {
-    const row = finding(o.possibleLoad ? 'red' : '', o.title, null, [o.possibleLoad]);
-    const more = el('details');
-    more.append(el('summary', '근거 보기'), el('p', o.evidence));
-    row.lastChild.append(more);
-    obs.append(row);
+    obs.append(finding(o.possibleLoad ? 'red' : '', o.title, null, [o.possibleLoad], null, o.evidence));
   });
   const exercises = f.exercises || [], goals = f.retestGoals || [];
   $('exerciseSheet').hidden = !exercises.length;
   $('exercises').replaceChildren(...exercises.map(x => {
-    const row = finding('blue', x.name, null, [x.how]);
-    const more = el('details');
-    more.append(el('summary', '왜 이 운동인가요'), el('p', x.reason));
-    row.lastChild.append(more);
-    return row;
+    return finding('blue', x.name, null, [x.how], null, x.reason);
   }));
   $('goalSheet').hidden = !goals.length;
   $('goals').replaceChildren(...goals.map(g => el('li', g)));
