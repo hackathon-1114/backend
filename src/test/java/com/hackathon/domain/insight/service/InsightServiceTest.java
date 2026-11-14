@@ -1,0 +1,73 @@
+package com.hackathon.domain.insight.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hackathon.domain.ai.AiDto;
+import com.hackathon.domain.ai.AiService;
+import com.hackathon.domain.insight.dto.InsightResponse;
+import com.hackathon.domain.insight.entity.Insight;
+import com.hackathon.domain.insight.repository.InsightRepository;
+import com.hackathon.domain.workout.entity.Workout;
+import com.hackathon.domain.workout.repository.WorkoutRepository;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
+/** 실제 AI 호출 없이, 기록이 프롬프트로 바뀌는 모양과 응답이 저장되는 흐름만 확인한다. */
+class InsightServiceTest {
+
+    private final WorkoutRepository workoutRepository = mock(WorkoutRepository.class);
+    private final InsightRepository insightRepository = mock(InsightRepository.class);
+    private final AiService aiService = mock(AiService.class);
+    private final InsightService service = new InsightService(workoutRepository, insightRepository, aiService);
+
+    @Test
+    void describeAddsWeekdayAndGapSoTheModelDoesNotHaveToCompute() {
+        String text = InsightService.describe(List.of(
+                workout(LocalDateTime.of(2026, 11, 8, 8, 0), 13.0, "최장 거리"),
+                workout(LocalDateTime.of(2026, 11, 12, 19, 50), 4.0, null)));
+
+        assertThat(text).contains("2026-11-08(일) 08:00 | 러닝 | 40분 | 13.0km | 강도 3/5 | 기분 4/5 | 메모: 최장 거리");
+        assertThat(text).contains("2026-11-12(목) 19:50 | 러닝 | 40분 | 4.0km | 강도 3/5 | 기분 4/5 | 직전 기록 후 4일\n");
+    }
+
+    @Test
+    void analyzeSendsRecordsOldestFirstAndReplacesPreviousInsights() throws Exception {
+        List<Workout> newestFirst = new ArrayList<>();
+        for (int day = 10; day >= 1; day--) {
+            newestFirst.add(workout(LocalDateTime.of(2026, 11, day, 7, 0), 5.0, null));
+        }
+        List<Insight> previous = List.of(Insight.builder().userId(1L).title("이전 결과").build());
+        when(workoutRepository.findByUserIdOrderByPerformedAtDesc(1L)).thenReturn(newestFirst);
+        when(insightRepository.findByUserIdOrderByIdAsc(1L)).thenReturn(previous);
+        when(insightRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+        when(aiService.json(any())).thenReturn(new ObjectMapper().readTree("""
+                {"patterns":[
+                  {"title":"아침에 뛴 날 기분이 더 좋습니다","evidence":"11월 1일~10일 07시 기록","suggestion":"이번 주는 아침에 뛰어 보세요"},
+                  {"title":"","evidence":"빈 제목은 버린다","suggestion":""}]}
+                """));
+
+        List<InsightResponse> result = service.analyze(1L);
+
+        assertThat(result).extracting(InsightResponse::title).containsExactly("아침에 뛴 날 기분이 더 좋습니다");
+        verify(insightRepository).deleteAll(previous);
+
+        ArgumentCaptor<AiDto.JsonRequest> sent = ArgumentCaptor.forClass(AiDto.JsonRequest.class);
+        verify(aiService).json(sent.capture());
+        String message = sent.getValue().message();
+        assertThat(message.indexOf("2026-11-01")).isLessThan(message.indexOf("2026-11-10"));
+    }
+
+    private static Workout workout(LocalDateTime at, Double km, String memo) {
+        return Workout.builder().userId(1L).type("러닝").performedAt(at).durationMinutes(40)
+                .distanceKm(km).intensity(3).mood(4).memo(memo).build();
+    }
+}
