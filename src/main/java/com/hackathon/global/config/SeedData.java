@@ -1,15 +1,24 @@
 package com.hackathon.global.config;
 
+import com.hackathon.domain.exerciseset.dto.ExerciseSetRequest;
+import com.hackathon.domain.exerciseset.entity.ExerciseSet;
+import com.hackathon.domain.exerciseset.repository.ExerciseSetRepository;
 import com.hackathon.domain.formcheck.entity.FormCheck;
 import com.hackathon.domain.formcheck.repository.FormCheckRepository;
+import com.hackathon.domain.inbody.entity.InbodyRecord;
+import com.hackathon.domain.inbody.repository.InbodyRepository;
 import com.hackathon.domain.sample.entity.Sample;
 import com.hackathon.domain.sample.repository.SampleRepository;
+import com.hackathon.domain.survey.entity.Survey;
+import com.hackathon.domain.survey.repository.SurveyRepository;
 import com.hackathon.domain.workout.entity.Workout;
 import com.hackathon.domain.workout.repository.WorkoutRepository;
+import com.hackathon.global.common.Json;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
@@ -25,6 +34,10 @@ public class SeedData implements ApplicationRunner {
     private final SampleRepository sampleRepository;
     private final WorkoutRepository workoutRepository;
     private final FormCheckRepository formCheckRepository;
+    private final ExerciseSetRepository exerciseSetRepository;
+    private final InbodyRepository inbodyRepository;
+    private final SurveyRepository surveyRepository;
+    private final Json json;
 
     @Override
     @Transactional
@@ -42,6 +55,20 @@ public class SeedData implements ApplicationRunner {
         }
         if (formCheckRepository.count() == 0) {
             formCheckRepository.saveAll(demoFormChecks(lastSunday));
+        }
+        if (exerciseSetRepository.count() == 0) {
+            exerciseSetRepository.saveAll(demoSets(lastSunday));
+        }
+        if (inbodyRepository.count() == 0) {
+            // 왼다리 근육량이 오른다리보다 7.5% 적다. 문진의 왼쪽 무릎 불편함과 같은 쪽으로 맞췄다
+            inbodyRepository.save(InbodyRecord.builder().userId(1L).source("manual").measuredAt(lastSunday.minusDays(3))
+                    .weightKg(68.4).skeletalMuscleKg(30.1).bodyFatPercent(18.5)
+                    .rightArmKg(3.0).leftArmKg(2.9).trunkKg(24.2).rightLegKg(9.3).leftLegKg(8.6).build());
+        }
+        if (surveyRepository.count() == 0) {
+            surveyRepository.save(Survey.builder().userId(1L).goal("하체 근력 강화").experience("헬스 6개월")
+                    .discomfortsJson("[{\"bodyPart\":\"왼쪽 무릎\",\"situation\":\"계단을 내려갈 때\",\"level\":3}]")
+                    .build());
         }
     }
 
@@ -146,6 +173,35 @@ public class SeedData implements ApplicationRunner {
                 .goodPointsJson(goodPointsJson)
                 .issuesJson(issuesJson)
                 .issueLabels(issueLabels)
+                .build();
+    }
+
+    /**
+     * 유저 1의 카메라 세트 기록 (측면 스쿼트 10회씩). 심어 둔 패턴:
+     * 야근한 수요일 밤 세트는 5~6회째부터 깊이가 얕아지고 느려지며 상체가 숙여지고, 토요일 아침 세트는 끝까지 일정하다.
+     */
+    private List<ExerciseSet> demoSets(LocalDate lastSunday) {
+        return List.of(
+                set(lastSunday, 2, DayOfWeek.WEDNESDAY, 21, 45, 6),
+                set(lastSunday, 1, DayOfWeek.SATURDAY, 7, 20, 0),
+                set(lastSunday, 0, DayOfWeek.WEDNESDAY, 22, 5, 5));
+    }
+
+    /** fadeFrom회째부터 무너지는 10회 세트를 만든다. 0이면 끝까지 일정하다 */
+    private ExerciseSet set(LocalDate lastSunday, int weeksAgo, DayOfWeek day, int hour, int minute, int fadeFrom) {
+        List<ExerciseSetRequest.Rep> reps = new ArrayList<>();
+        for (int i = 1; i <= 10; i++) {
+            int tired = fadeFrom > 0 && i >= fadeFrom ? i - fadeFrom + 1 : 0;
+            double depth = 0.50 + ((i * 7) % 3 - 1) * 0.005 + (tired > 0 ? 0.04 + 0.02 * tired : 0);
+            double thigh = Math.round((depth - 0.47) * 1500) / 10.0;
+            reps.add(new ExerciseSetRequest.Rep("side", Math.round(depth * 1000) / 1000.0, 2200 + 230 * tired,
+                    32.0 + 2.5 * tired, thigh, null, null, thigh > 15 ? List.of("깊이 부족") : List.of()));
+        }
+        return ExerciseSet.builder()
+                .userId(1L)
+                .exercise("스쿼트")
+                .performedAt(dateOf(lastSunday, weeksAgo, day).atTime(hour, minute))
+                .repsJson(json.write(reps))
                 .build();
     }
 }

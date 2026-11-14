@@ -10,6 +10,9 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hackathon.domain.ai.AiDto;
 import com.hackathon.domain.ai.AiService;
+import com.hackathon.domain.exerciseset.service.ExerciseSetService;
+import com.hackathon.domain.inbody.service.InbodyService;
+import com.hackathon.domain.survey.service.SurveyService;
 import com.hackathon.domain.formcheck.entity.FormCheck;
 import com.hackathon.domain.formcheck.repository.FormCheckRepository;
 import com.hackathon.domain.insight.dto.InsightResponse;
@@ -29,8 +32,12 @@ class InsightServiceTest {
     private final WorkoutRepository workoutRepository = mock(WorkoutRepository.class);
     private final InsightRepository insightRepository = mock(InsightRepository.class);
     private final FormCheckRepository formCheckRepository = mock(FormCheckRepository.class);
+    private final ExerciseSetService exerciseSetService = mock(ExerciseSetService.class);
+    private final InbodyService inbodyService = mock(InbodyService.class);
+    private final SurveyService surveyService = mock(SurveyService.class);
     private final AiService aiService = mock(AiService.class);
-    private final InsightService service = new InsightService(workoutRepository, insightRepository, formCheckRepository, aiService);
+    private final InsightService service = new InsightService(workoutRepository, insightRepository, formCheckRepository,
+            exerciseSetService, inbodyService, surveyService, aiService);
 
     @Test
     void describeAddsWeekdayAndGapSoTheModelDoesNotHaveToCompute() {
@@ -56,6 +63,9 @@ class InsightServiceTest {
         }
         List<Insight> previous = List.of(Insight.builder().userId(1L).title("이전 결과").build());
         when(workoutRepository.findByUserIdOrderByPerformedAtDesc(1L)).thenReturn(newestFirst);
+        when(exerciseSetService.describeHistory(1L, InsightService.MAX_SETS)).thenReturn("\n세트 기록 줄\n");
+        when(inbodyService.describeLatest(1L)).thenReturn("\n인바디 줄\n");
+        when(surveyService.describeLatest(1L)).thenReturn("\n문진 줄\n");
         when(insightRepository.findByUserIdOrderByIdAsc(1L)).thenReturn(previous);
         when(insightRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
         when(aiService.json(any())).thenReturn(new ObjectMapper().readTree("""
@@ -73,6 +83,7 @@ class InsightServiceTest {
         verify(aiService).json(sent.capture());
         String message = sent.getValue().message();
         assertThat(message.indexOf("2026-11-01")).isLessThan(message.indexOf("2026-11-10"));
+        assertThat(message).contains("세트 기록 줄", "인바디 줄", "문진 줄");
     }
 
     private static Workout workout(LocalDateTime at, Double km, String memo) {

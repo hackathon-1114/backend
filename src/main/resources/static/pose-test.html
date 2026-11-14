@@ -19,6 +19,7 @@
   td, th { border: 1px solid #ddd; padding: 4px 6px; text-align: right; }
   td:last-child, th:last-child { text-align: left; }
   .muted { color: #666; font-size: 13px; }
+  .card { border: 1px solid #ddd; border-radius: 8px; padding: 10px 12px; margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -47,6 +48,12 @@
   <thead><tr><th>회</th><th>방향</th><th>깊이</th><th>시간</th><th>상체 기울기</th><th>무릎/발목 간격</th><th>관찰</th></tr></thead>
   <tbody id="reps"></tbody>
 </table>
+
+<div class="row">
+  <button id="save" type="button" disabled>세트 저장하고 AI 설명 받기</button>
+  <span class="muted">근전도는 센서가 없어 시뮬레이션 값을 함께 보냅니다.</span>
+</div>
+<div id="setResult"></div>
 
 <script type="module">
 import { PoseLandmarker, FilesetResolver, DrawingUtils }
@@ -265,6 +272,7 @@ function stop(message) {
   running = false;
   if (video.srcObject) { video.srcObject.getTracks().forEach(tr => tr.stop()); video.srcObject = null; }
   if (message) $('status').textContent = message + ' · 총 ' + reps.length + '회';
+  $('save').disabled = reps.length === 0;
   if (onDone && message) {
     const done = onDone; onDone = null;
     const detected = series.filter(r => r[1] != null).length;
@@ -295,6 +303,73 @@ $('file').addEventListener('change', e => {
   if (file) start(async () => { video.playbackRate = 1; video.src = URL.createObjectURL(file); });
 });
 $('stop').addEventListener('click', () => { video.pause(); stop('정지했습니다'); });
+
+// ── 세트 저장과 AI 설명 ─────────────────────────────────────────────────────────────
+// 센서가 없어 근전도는 시뮬레이션한다. 깊이 앉을수록, 뒤로 갈수록 값이 커지게 만든 가짜 값이고 실제 근육 상태와 무관하다
+function simulateEmg(list) {
+  const channel = (name, side, gain) => ({ name, side,
+    rmsPerRep: list.map((r, i) => +(gain * (1.1 - r.depth) * (1 + 0.02 * i)).toFixed(3)) });
+  return [channel('대둔근', 'left', 0.42), channel('대둔근', 'right', 0.50),
+          channel('대퇴사두근', 'left', 0.80), channel('대퇴사두근', 'right', 0.82)];
+}
+
+function card(title, lines) {
+  const box = document.createElement('div');
+  box.className = 'card';
+  const head = document.createElement('strong');
+  head.textContent = title;
+  box.append(head);
+  lines.filter(Boolean).forEach(text => { const d = document.createElement('div'); d.textContent = text; box.append(d); });
+  return box;
+}
+
+function renderSet(set) {
+  const st = set.stats;
+  const out = [card('세트 통계 (서버 계산)', [
+    st.repCount + '회 · 평균 깊이 ' + Math.round(st.avgDepth * 100) + '% (낮을수록 깊음)',
+    '후반 깊이 변화 ' + Math.round(st.depthChange * 100) + '%p · 후반 속도 변화 ' + Math.round(st.tempoChangePct) + '%',
+    st.fadeFromRep ? st.fadeFromRep + '회째부터 깊이나 속도가 무너졌습니다' : '끝까지 일정했습니다',
+  ])];
+  if (set.emg) {
+    out.push(card('근전도 요약 (시뮬레이션)', [
+      set.emg.targetSharePct == null ? null : '목표 근육 비중 ' + set.emg.targetSharePct + '%',
+      ...set.emg.asymmetries.map(a => a.muscle + ' 좌우 차이 ' + a.diffPct + '% (' + (a.stronger === 'right' ? '오른쪽' : '왼쪽') + '이 큼)'),
+    ]));
+  }
+  if (set.feedback) {
+    out.push(card('AI 설명', [set.feedback.summary]));
+    set.feedback.observations.forEach(o => out.push(card(o.title, [o.evidence, o.possibleLoad])));
+    out.push(card('다음 세트에서', set.feedback.suggestions.map(x => '· ' + x)));
+  } else {
+    out.push(card('AI 설명', ['작성 중... (3~12초)']));
+  }
+  $('setResult').replaceChildren(...out);
+}
+
+async function call(url, body) {
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-User-Id': '1' },
+    body: body ? JSON.stringify(body) : undefined });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.code + ' ' + data.message);
+  return data.data;
+}
+
+$('save').addEventListener('click', async () => {
+  if (!reps.length) return;
+  $('save').disabled = true;
+  try {
+    const saved = await call('/api/sets', { exercise: '스쿼트', reps, targetMuscle: '대둔근',
+      muscles: simulateEmg(reps), emgSimulated: true });
+    renderSet(saved);
+    const explained = await call('/api/sets/' + saved.id + '/feedback');
+    renderSet(explained);
+    say(explained.feedback.summary);
+  } catch (e) {
+    $('setResult').append(card('실패', [e.message]));
+  } finally {
+    $('save').disabled = false;
+  }
+});
 
 try {
   const vision = await FilesetResolver.forVisionTasks(WASM);

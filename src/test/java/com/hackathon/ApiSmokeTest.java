@@ -132,6 +132,89 @@ class ApiSmokeTest {
     }
 
     @Test
+    void setsAreSavedWithStatsAndSeeded() throws Exception {
+        mvc.perform(get("/api/sets").header("X-User-Id", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(3))
+                .andExpect(jsonPath("$.data[0].stats.repCount").value(10))
+                .andExpect(jsonPath("$.data[0].stats.fadeFromRep").value(5))
+                .andExpect(jsonPath("$.data[1].stats.fadeFromRep").doesNotExist())
+                .andExpect(jsonPath("$.data[2].stats.fadeFromRep").value(6));
+
+        String reps = "[" + "{\"view\":\"side\",\"depth\":0.5,\"durationMs\":2000,\"maxLean\":30,\"thighAngle\":5,\"findings\":[]},".repeat(3)
+                + "{\"view\":\"side\",\"depth\":0.62,\"durationMs\":3000,\"maxLean\":41,\"thighAngle\":22,\"minTorso\":0.9,\"findings\":[\"깊이 부족\"]}]";
+        mvc.perform(post("/api/sets").header("X-User-Id", "8").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"exercise\":\"스쿼트\",\"reps\":" + reps + ",\"targetMuscle\":\"대둔근\",\"emgSimulated\":true,"
+                                + "\"muscles\":[{\"name\":\"대둔근\",\"side\":\"left\",\"rmsPerRep\":[0.3,0.3,0.3,0.2]},"
+                                + "{\"name\":\"대둔근\",\"side\":\"right\",\"rmsPerRep\":[0.4,0.4,0.4,0.4]}]}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.stats.repCount").value(4))
+                .andExpect(jsonPath("$.data.stats.fadeFromRep").value(4))
+                .andExpect(jsonPath("$.data.stats.findingCounts['깊이 부족']").value(1))
+                .andExpect(jsonPath("$.data.emg.simulated").value(true))
+                .andExpect(jsonPath("$.data.emg.asymmetries[0].stronger").value("right"))
+                .andExpect(jsonPath("$.data.feedback").doesNotExist());
+
+        mvc.perform(post("/api/sets").contentType(MediaType.APPLICATION_JSON).content("{\"exercise\":\"스쿼트\",\"reps\":[]}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.data.reps").exists());
+
+        // 피드백은 AI를 부른다. 테스트에는 키가 없으므로 503이고, 세트는 그대로 남는다
+        mvc.perform(post("/api/sets/1/feedback"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("AI503"));
+        mvc.perform(get("/api/sets/9999")).andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("SET404"));
+    }
+
+    @Test
+    void inbodyManualEntryPhotoAndSeed() throws Exception {
+        mvc.perform(get("/api/inbody").header("X-User-Id", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].legDiffPct").value(7.5))
+                .andExpect(jsonPath("$.data[0].weakerLeg").value("left"));
+
+        mvc.perform(post("/api/inbody").header("X-User-Id", "8").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"values\":{\"weightKg\":70,\"rightLegKg\":9.0,\"leftLegKg\":10.0},\"measuredAt\":\"2026-11-01\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.source").value("manual"))
+                .andExpect(jsonPath("$.data.legDiffPct").value(10.0))
+                .andExpect(jsonPath("$.data.weakerLeg").value("right"))
+                .andExpect(jsonPath("$.data.armDiffPct").doesNotExist());
+
+        mvc.perform(post("/api/inbody").contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INBODY400"));
+
+        mvc.perform(post("/api/inbody").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"image\":{\"mediaType\":\"image/jpeg\",\"data\":\"AAAA\"}}"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("AI503"));
+    }
+
+    @Test
+    void surveyLatestWins() throws Exception {
+        mvc.perform(get("/api/surveys/latest").header("X-User-Id", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.discomforts[0].bodyPart").value("왼쪽 무릎"));
+
+        mvc.perform(get("/api/surveys/latest").header("X-User-Id", "55"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("SURVEY404"));
+
+        mvc.perform(post("/api/surveys").header("X-User-Id", "8").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"goal\":\"체력\",\"discomforts\":[{\"bodyPart\":\"허리\",\"level\":11}]}"))
+                .andExpect(status().isBadRequest());
+
+        mvc.perform(post("/api/surveys").header("X-User-Id", "8").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"goal\":\"체력\",\"discomforts\":[{\"bodyPart\":\"허리\",\"situation\":\"오래 앉아 있을 때\",\"level\":4}]}"))
+                .andExpect(status().isCreated());
+        mvc.perform(get("/api/surveys/latest").header("X-User-Id", "8"))
+                .andExpect(jsonPath("$.data.goal").value("체력"))
+                .andExpect(jsonPath("$.data.discomforts[0].level").value(4));
+    }
+
+    @Test
     void aiWithoutKeyReturns503() throws Exception {
         mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"hi\"}"))
                 .andExpect(status().isServiceUnavailable())
