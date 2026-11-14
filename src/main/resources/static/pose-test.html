@@ -346,8 +346,11 @@ function renderSet(set) {
   $('setResult').replaceChildren(...out);
 }
 
+// 주소에 ?user=7 처럼 붙이면 그 유저로 저장한다. 없으면 시연 데이터가 든 유저 1
+const USER_ID = new URLSearchParams(location.search).get('user') || '1';
+
 async function call(url, body) {
-  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-User-Id': '1' },
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-User-Id': USER_ID },
     body: body ? JSON.stringify(body) : undefined });
   const data = await res.json();
   if (!res.ok) throw new Error(data.code + ' ' + data.message);

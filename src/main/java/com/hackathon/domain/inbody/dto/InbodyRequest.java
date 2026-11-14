@@ -9,14 +9,16 @@ import java.time.LocalDate;
 
 public class InbodyRequest {
 
-    /** image와 values 중 하나는 있어야 한다. 둘 다 있으면 values를 쓴다 */
+    /** values, sample, image 중 하나는 있어야 한다. 여러 개를 보내면 이 순서로 먼저 있는 것을 쓴다 */
     public record Create(
             @Schema(description = "인바디 결과지 사진. AI가 수치를 읽는다 (5~15초)")
             AiDto.@Valid Image image,
             @Schema(description = "직접 입력한 수치. 사진 대신 쓰거나, 사진에서 읽은 값을 고쳐서 다시 저장할 때 쓴다")
             @Valid Values values,
             @Schema(description = "측정일. 생략하면 결과지에서 읽고, 못 읽으면 오늘", example = "2026-11-10")
-            LocalDate measuredAt) {
+            LocalDate measuredAt,
+            @Schema(description = "true면 서버가 정해 둔 가상 인바디 수치를 저장한다. 결과지가 없을 때 시연용", example = "true")
+            Boolean sample) {
     }
 
     public record Values(

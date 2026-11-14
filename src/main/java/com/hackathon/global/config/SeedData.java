@@ -5,8 +5,8 @@ import com.hackathon.domain.exerciseset.entity.ExerciseSet;
 import com.hackathon.domain.exerciseset.repository.ExerciseSetRepository;
 import com.hackathon.domain.formcheck.entity.FormCheck;
 import com.hackathon.domain.formcheck.repository.FormCheckRepository;
-import com.hackathon.domain.inbody.entity.InbodyRecord;
 import com.hackathon.domain.inbody.repository.InbodyRepository;
+import com.hackathon.domain.inbody.service.InbodyService;
 import com.hackathon.domain.sample.entity.Sample;
 import com.hackathon.domain.sample.repository.SampleRepository;
 import com.hackathon.domain.survey.entity.Survey;
@@ -60,10 +60,8 @@ public class SeedData implements ApplicationRunner {
             exerciseSetRepository.saveAll(demoSets(lastSunday));
         }
         if (inbodyRepository.count() == 0) {
-            // 왼다리 근육량이 오른다리보다 7.5% 적다. 문진의 왼쪽 무릎 불편함과 같은 쪽으로 맞췄다
-            inbodyRepository.save(InbodyRecord.builder().userId(1L).source("manual").measuredAt(lastSunday.minusDays(3))
-                    .weightKg(68.4).skeletalMuscleKg(30.1).bodyFatPercent(18.5)
-                    .rightArmKg(3.0).leftArmKg(2.9).trunkKg(24.2).rightLegKg(9.3).leftLegKg(8.6).build());
+            // 가상 수치. 왼다리 근육량이 오른다리보다 7.5% 적다. 문진의 왼쪽 무릎 불편함과 같은 쪽으로 맞췄다
+            inbodyRepository.save(InbodyService.sample(1L, lastSunday.minusDays(3)));
         }
         if (surveyRepository.count() == 0) {
             surveyRepository.save(Survey.builder().userId(1L).goal("하체 근력 강화").experience("헬스 6개월")

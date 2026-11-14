@@ -24,7 +24,7 @@ public enum ErrorCode {
     INSIGHT_NOT_ENOUGH_DATA(HttpStatus.BAD_REQUEST, "INSIGHT400",
             "분석할 기록이 부족합니다. 카메라 세트를 1번 이상 저장하거나 운동 기록을 5개 이상 남겨 주세요."),
     SET_NOT_FOUND(HttpStatus.NOT_FOUND, "SET404", "세트 기록을 찾을 수 없습니다."),
-    INBODY_EMPTY(HttpStatus.BAD_REQUEST, "INBODY400", "인바디 사진(image)이나 수치(values) 중 하나를 보내 주세요."),
+    INBODY_EMPTY(HttpStatus.BAD_REQUEST, "INBODY400", "가상 데이터(sample), 수치(values), 사진(image) 중 하나를 보내 주세요."),
     INBODY_NOT_READABLE(HttpStatus.UNPROCESSABLE_ENTITY, "INBODY422",
             "사진에서 인바디 수치를 읽지 못했습니다. 결과지 전체가 선명하게 보이게 다시 찍어 주세요."),
     SURVEY_NOT_FOUND(HttpStatus.NOT_FOUND, "SURVEY404", "작성한 문진이 없습니다."),

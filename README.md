@@ -42,7 +42,7 @@ API 키는 프로젝트 루트 `.env`에 `ANTHROPIC_API_KEY=sk-ant-...` 한 줄�
 | URL | 설명 |
 |---|---|
 | http://localhost:8080/swagger-ui.html | API 문서 (프론트에 이 링크 공유) |
-| http://localhost:8080/h2-console | DB 콘솔. JDBC URL `jdbc:h2:mem:hackathon`, user `sa` |
+| http://localhost:8080/h2-console | DB 콘솔. `H2_CONSOLE_ENABLED=true`로 실행할 때만 열린다. JDBC URL `jdbc:h2:mem:hackathon`, user `sa` |
 | http://localhost:8080/api/health | 헬스 체크 |
 
 로컬 DB는 인메모리라 재시작하면 초기화되고, `SeedData`가 데모 데이터를 다시 넣는다.

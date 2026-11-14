@@ -7,7 +7,7 @@ import java.time.LocalDate;
 public record InbodyResponse(
         Long id,
         LocalDate measuredAt,
-        @Schema(description = "photo / manual", example = "photo")
+        @Schema(description = "sample(가상 데이터) / manual(직접 입력) / photo(사진에서 읽음). sample이면 화면에 가상 데이터라고 표시한다", example = "sample")
         String source,
         Double weightKg,
         Double skeletalMuscleKg,

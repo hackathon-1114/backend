@@ -59,6 +59,9 @@ public class InbodyService {
                     .rightArmKg(v.rightArmKg()).leftArmKg(v.leftArmKg()).trunkKg(v.trunkKg())
                     .rightLegKg(v.rightLegKg()).leftLegKg(v.leftLegKg()).build());
         }
+        if (Boolean.TRUE.equals(req.sample())) {
+            return save(sample(userId, req.measuredAt() != null ? req.measuredAt() : today));
+        }
         if (req.image() == null) {
             throw new BusinessException(ErrorCode.INBODY_EMPTY);
         }
@@ -77,6 +80,16 @@ public class InbodyService {
                 .rightLegKg(number(r, "rightLegKg")).leftLegKg(number(r, "leftLegKg")).build());
     }
 
+    /**
+     * 실제 결과지 없이 흐름을 보여 주기 위한 가상 수치. 왼다리 근육량이 오른다리보다 7.5% 적게 잡혀 있어
+     * 좌우 차이를 움직임 측정과 연결하는 설명을 시연할 수 있다. 실제 측정값이 아니다.
+     */
+    public static InbodyRecord sample(Long userId, LocalDate measuredAt) {
+        return InbodyRecord.builder().userId(userId).source("sample").measuredAt(measuredAt)
+                .weightKg(68.4).skeletalMuscleKg(30.1).bodyFatPercent(18.5)
+                .rightArmKg(3.0).leftArmKg(2.9).trunkKg(24.2).rightLegKg(9.3).leftLegKg(8.6).build();
+    }
+
     public List<InbodyResponse> findMine(Long userId) {
         return inbodyRepository.findByUserIdOrderByMeasuredAtDescIdDesc(userId).stream().map(InbodyResponse::from).toList();
     }
@@ -86,7 +99,8 @@ public class InbodyService {
         List<InbodyRecord> records = inbodyRepository.findByUserIdOrderByMeasuredAtDescIdDesc(userId);
         if (records.isEmpty()) return "";
         InbodyResponse r = InbodyResponse.from(records.get(0));
-        StringBuilder sb = new StringBuilder("\n인바디 (").append(r.measuredAt()).append(" 측정, 체성분만 알려 주며 자세는 알 수 없다)\n");
+        StringBuilder sb = new StringBuilder("\n인바디 (").append(r.measuredAt()).append(" 측정, ")
+                .append("sample".equals(r.source()) ? "시연용 가상 수치, " : "").append("체성분만 알려 주며 자세는 알 수 없다)\n");
         append(sb, "체중", r.weightKg(), "kg");
         append(sb, "골격근량", r.skeletalMuscleKg(), "kg");
         append(sb, "체지방률", r.bodyFatPercent(), "%");

@@ -27,8 +27,8 @@ public class InbodyController {
     private final InbodyService inbodyService;
 
     @Operation(summary = "인바디 기록 추가",
-            description = "image(결과지 사진)를 보내면 AI가 수치를 읽고, values를 보내면 그대로 저장한다. "
-                    + "사진이 결과지가 아니거나 수치를 하나도 못 읽으면 INBODY422, 둘 다 없으면 INBODY400. "
+            description = "sample을 true로 보내면 가상 수치를 저장하고, values를 보내면 그대로 저장하고, image(결과지 사진)를 보내면 AI가 수치를 읽는다. "
+                    + "사진이 결과지가 아니거나 수치를 하나도 못 읽으면 INBODY422, 셋 다 없으면 INBODY400. "
                     + "읽은 값이 틀렸으면 고친 values로 다시 보내면 된다")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

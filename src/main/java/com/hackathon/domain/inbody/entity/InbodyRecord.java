@@ -28,7 +28,7 @@ public class InbodyRecord extends BaseTimeEntity {
     @Column(nullable = false)
     private LocalDate measuredAt;
 
-    /** photo(사진에서 AI가 읽음) / manual(직접 입력) */
+    /** sample(서버가 정해 둔 가상 수치) / manual(직접 입력) / photo(사진에서 AI가 읽음) */
     @Column(nullable = false, length = 10)
     private String source;
 

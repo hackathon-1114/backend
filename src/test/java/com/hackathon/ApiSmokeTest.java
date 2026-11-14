@@ -171,8 +171,14 @@ class ApiSmokeTest {
         mvc.perform(get("/api/inbody").header("X-User-Id", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].source").value("sample"))
                 .andExpect(jsonPath("$.data[0].legDiffPct").value(7.5))
                 .andExpect(jsonPath("$.data[0].weakerLeg").value("left"));
+
+        mvc.perform(post("/api/inbody").header("X-User-Id", "9").contentType(MediaType.APPLICATION_JSON).content("{\"sample\":true}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.source").value("sample"))
+                .andExpect(jsonPath("$.data.leftLegKg").value(8.6));
 
         mvc.perform(post("/api/inbody").header("X-User-Id", "8").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"values\":{\"weightKg\":70,\"rightLegKg\":9.0,\"leftLegKg\":10.0},\"measuredAt\":\"2026-11-01\"}"))

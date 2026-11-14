@@ -41,7 +41,8 @@ spring:
     password:
   h2:
     console:
-      enabled: true
+      # 기본은 꺼 둔다. 로컬에서 DB를 들여다볼 때만 H2_CONSOLE_ENABLED=true 로 켠다 (공개 주소에서 열리면 안 됨)
+      enabled: ${H2_CONSOLE_ENABLED:false}
       path: /h2-console
   jpa:
     show-sql: true
