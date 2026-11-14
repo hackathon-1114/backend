@@ -61,7 +61,7 @@
 
 1. 공개 데이터 20명의 정면 영상 80회를 돌렸다. 무릎 간격 / 발목 간격이 1.01~1.57로 전부 1 이상이라 무릎이 모인 사례가 없었다. 규칙이 오탐을 내지 않는다는 것만 확인됐다
 2. 위키미디어 공용에서 무릎이 모이는 스쿼트 영상을 찾았으나 없었다
-3. 지표 선택은 문헌으로 뒷받침했다. 2D 지표 중 무릎 대 발목 간격 비율이 3D 무릎 외반 각도와 가장 잘 맞는다 (정면 투영각 r² 0.15 대비 r² 0.35, [Mizner 외](https://lida.sport-iat.de/twm/Record/4025422?lng=en)). 드롭 점프에서 3D와의 일치도 ICC 0.96을 보고한 연구도 있다 ([Ortiz 외 2016](https://www.dovepress.com/reliability-and-concurrent-validity-between-two-dimensional-and-three--peer-reviewed-article-OAJSM))
+3. 지표 선택은 문헌으로 뒷받침했다. 2D 지표 중 무릎 대 발목 간격 비율이 3D 무릎 외반 각도와 가장 잘 맞는다 (정면 투영각 r² 0.15 대비 r² 0.35, [Mizner 외](https://lida.sport-iat.de/twm/Record/4025422?lng=en)). 드롭 점프에서 3D와의 일치도 ICC 0.96을 보고한 연구도 있다 ([2016년 Open Access Journal of Sports Medicine 논문](https://www.dovepress.com/reliability-and-concurrent-validity-between-two-dimensional-and-three--peer-reviewed-article-OAJSM))
 4. 같은 사람의 무릎 간격 비율이 반복 간에 얼마나 흔들리는지 쟀다. 16명의 중앙값이 1.8%, 최댓값이 7.6%였다
 
 **고친 것**
