@@ -5,9 +5,9 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
 
 :root {
-  --steel: #0D110E;
-  --sheet: #151B16;
-  --tile: #1D251F;
+  --steel: #0A0D08;
+  --sheet: #12160F;
+  --tile: #1A2015;
   --ink: #F3F6F1;
   --sub: #A3ADA4;
   --faint: #7C877D;
@@ -28,7 +28,7 @@
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
-  background: var(--steel) radial-gradient(90% 46% at 50% 0%, rgba(198, 255, 58, .13), transparent 70%) no-repeat fixed;
+  background: var(--steel) radial-gradient(90% 46% at 50% 0%, rgba(198, 255, 58, .07), transparent 70%) no-repeat fixed;
   color: var(--ink);
   font-family: var(--body);
   font-size: 15px;
@@ -49,7 +49,7 @@ body {
 }
 
 /* 화면을 이루는 판 */
-.sheet { background: var(--sheet); padding: 22px 20px; margin: 0 16px 12px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, .07); }
+.sheet { background: var(--sheet); padding: 22px 20px; margin: 0 16px 12px; border-radius: 16px; border: 1px solid rgba(198, 255, 58, .16); }
 .sheet > :first-child { margin-top: 0; }
 .sheet > :last-child { margin-bottom: 0; }
 
@@ -63,7 +63,7 @@ p { margin: 8px 0 0; }
 
 /* 큰 수치. 옅은 면 위에 올린다 */
 .figures { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; }
-.figure { background: var(--tile); border-radius: 14px; padding: 13px 14px 12px; }
+.figure { background: var(--tile); border: 1px solid rgba(198, 255, 58, .1); border-radius: 12px; padding: 13px 14px 12px; }
 .figure small { display: block; color: var(--sub); font-size: 12px; }
 .figure b { display: block; margin-top: 2px; font-weight: 700; font-size: 22px; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
 .figure b span { font-size: 13px; font-weight: 500; margin-left: 2px; color: var(--faint); letter-spacing: 0; }
@@ -143,7 +143,7 @@ input::placeholder { color: #5E685F; }
 
 /* 아래 고정 메뉴 */
 .tabs {
-  position: fixed; left: 0; right: 0; bottom: 0; background: rgba(13, 17, 14, .9);
+  position: fixed; left: 0; right: 0; bottom: 0; background: rgba(10, 13, 8, .92);
   -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
   border-top: 1px solid var(--rule); padding-bottom: env(safe-area-inset-bottom);
 }

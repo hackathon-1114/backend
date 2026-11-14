@@ -70,7 +70,7 @@ const MM = (() => {
   // 클수록 깊이 앉은 것이라 막대가 높을수록 잘 앉은 것으로 읽힌다.
   const sat = depth => Math.round((1 - depth) * 100);
 
-  const BLUE = '#C6FF3A', RED = '#FF6B6B', TRACK = '#2A332B', SUB = '#7C877D', INK = '#F3F6F1', DOT = '#151B16';   // BLUE는 강조색(라임) 자리
+  const BLUE = '#C6FF3A', RED = '#FF6B6B', TRACK = '#2A332B', SUB = '#7C877D', INK = '#F3F6F1', DOT = '#12160F';   // BLUE는 강조색(라임) 자리
 
   // 점들을 지나는 부드러운 곡선. 점 사이에서 값이 튀어 오르지 않는 방식(단조 3차 보간)이라 없는 봉우리를 만들지 않는다
   function smooth(pts) {
