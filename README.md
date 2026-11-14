@@ -1,9 +1,24 @@
-# Backend (Spring Boot)
+# MUSCLE MAP 백엔드 (Spring Boot)
 
-운동 중 자세와 움직임 변화를 기록하고, 쌓인 기록에서 사용자가 몰랐던 패턴을 찾아 주는 서비스의 백엔드. 프론트 저장소는 [hackathon-1114/frontend](https://github.com/hackathon-1114/frontend).
+내 몸의 숨겨진 운동 패턴을 발견하고 나에게 맞는 운동 방향을 찾아 주는 서비스의 백엔드. 인바디, 문진, 카메라로 잰 움직임을 엮어 반복 중에 나타나는 변화를 찾는다. 프론트 저장소는 [hackathon-1114/frontend](https://github.com/hackathon-1114/frontend).
+
+## 바로 써 보기
+
+배포 주소 https://hackathon-backend-production-967eabf5.up.railway.app 를 휴대폰이나 PC 크롬으로 연다.
+
+| 단계 | 하는 일 |
+|---|---|
+| 01 인바디 | "가상 인바디 데이터 불러오기"를 누른다 |
+| 02 문진 | 다섯 질문에 답하고 저장한다 |
+| 03 문제 제안 | "사전 분석 실행"을 누르면 확인하면 좋을 영역이 나온다 (약 10초) |
+| 04 AI 카메라 | "카메라로 시작"을 누르고 전신이 보이게 서서 스쿼트를 한다. 정지 후 "세트 저장하고 AI 설명 받기"를 누른다 |
+| 05 결과 | 세트 통계, 종합 분석, 맞춤 운동, 재측정 목표, 누적 패턴을 본다 |
+
+"예시 사용자"에는 5주치 기록이 들어 있어 카메라 없이도 05 결과까지 볼 수 있다. API 문서는 같은 주소의 `/swagger-ui.html` 이다.
 
 ## 문서
 
+- [docs/requirements.md](docs/requirements.md): 기획 요구사항, 와이어프레임, 심사 기준을 구현과 대조한 표
 - [docs/features.md](docs/features.md): 기능별 구현 방법과 한계, 화면과 API의 대응
 - [docs/verification.md](docs/verification.md): 자세 감지를 공개 데이터로 검증한 결과와 다시 돌려 보는 법
 
@@ -11,10 +26,11 @@
 
 | 경로 | 내용 |
 |---|---|
-| `POST /api/surveys`, `GET /api/surveys/latest` | 사용자 문진 (목표, 불편한 부위와 상황) |
-| `POST /api/inbody`, `GET /api/inbody` | 인바디. 결과지 사진을 AI가 읽거나 수치를 직접 입력. 좌우 근육량 차이 계산 |
-| `POST /api/sets`, `GET /api/sets` | 카메라로 추적한 세트 저장. 평균 깊이, 후반 변화, 무너진 회차를 바로 계산 |
-| `POST /api/sets/{id}/feedback` | 세트 수치를 인바디, 문진과 함께 AI가 설명 (3~13초) |
+| `POST /api/inbody`, `GET /api/inbody` | STEP 01. 인바디. 가상 데이터, 직접 입력, 결과지 사진 읽기. 좌우 근육량 차이 계산 |
+| `POST /api/surveys`, `GET /api/surveys/latest` | STEP 02. 문진 (앉아 있는 시간, 운동 횟수, 불편한 부위, 신체 습관, 목표) |
+| `POST /api/body-alerts/analyze`, `GET /api/body-alerts/latest` | STEP 03. 인바디와 문진만으로 만드는 사전 분석 (약 10초) |
+| `POST /api/sets`, `GET /api/sets` | STEP 04 뒤. 카메라로 추적한 세트 저장. 평균 깊이, 후반 변화, 무너진 회차를 바로 계산 |
+| `POST /api/sets/{id}/feedback` | STEP 05. 세트 수치를 인바디, 문진과 함께 AI가 설명. 맞춤 운동과 재측정 목표 포함 (10~20초) |
 | `POST /api/insights/analyze`, `GET /api/insights` | 쌓인 기록 전체에서 패턴 3개를 찾음 (약 12초) |
 | `/api/workouts` | 운동 기록 CRUD (종류, 시각, 시간, 거리, 강도, 기분, 메모) |
 | `POST /api/form-checks`, `GET /api/form-checks` | 영상에서 뽑은 장면을 AI가 직접 봄. 보조 기능 |
@@ -27,7 +43,7 @@
 
 서버가 띄우는 페이지에 프론트용 코드가 들어 있다.
 
-- `/`: 문진, 인바디, 카메라, 패턴을 한 화면에서 차례로 보여 주는 대체 시연 화면. 프론트가 준비되지 않았을 때 쓴다
+- `/`: 기획의 STEP 01~05를 한 화면에서 차례로 보여 주는 시연 화면
 - `/pose-test.html`: 카메라나 영상 파일에서 MediaPipe로 관절을 추적해 스쿼트 횟수, 깊이, 상체 기울기, 무릎 간격을 실시간으로 재고 음성으로 안내한다. 세트를 저장하고 AI 설명을 받는 흐름까지 들어 있다. 소스의 `measure`, `update`, `findings`가 핵심이다
 - `/form-check.html`: 영상에서 장면을 뽑아 `POST /api/form-checks`로 보낸다. 소스의 `extractFrames`가 핵심이다
 
