@@ -10,9 +10,13 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 ./gradlew bootRun    # http://localhost:8080/swagger-ui.html
 ```
 
-`master`에 푸시하면 Railway가 1~2분 안에 자동 배포한다. 배포 주소는 https://hackathon-backend-production-967eabf5.up.railway.app 이다.
+저장소와 배포는 분리돼 있다.
 
-**지금은 푸시하지 않는다.** 푸시는 곧 배포라서, 사용자가 배포하자고 말할 때만 `origin/master`에 푸시한다 (2026-11-14 해커톤 중 결정, 프로젝트 막바지에 한 번에 배포할 예정). 그전까지는 변경 요청을 받으면 구현하고 `./gradlew test` 통과를 확인한 뒤 로컬에만 커밋하고, `localhost:8080`에서 바뀐 엔드포인트를 호출해 확인한다. 테스트가 실패하면 커밋하지 않고 보고한다. force push와 히스토리 수정은 하지 않는다.
+- `origin`은 팀 저장소 `hackathon-1114/backend`다. 여기에 푸시해도 배포되지 않는다. 사용자가 푸시하라고 할 때 `origin/master`에 푸시한다
+- `railway`는 예전 저장소 `hackathon-1114/hackathon-backend`다. 이 저장소의 `master`에 푸시하면 Railway가 1~2분 안에 자동 배포한다. 배포 주소는 https://hackathon-backend-production-967eabf5.up.railway.app 이다
+- **배포는 사용자가 배포하자고 말할 때만 한다** (2026-11-14 해커톤 중 결정, 프로젝트 막바지에 한 번에 배포할 예정). 배포할 때는 `git push railway master`를 쓴다
+
+변경 요청을 받으면 구현하고 `./gradlew test` 통과를 확인한 뒤 로컬에 커밋하고, 로컬 서버에서 바뀐 엔드포인트를 호출해 확인한다. 로컬 8080은 다른 프로젝트가 쓰고 있어 `PORT=8081`로 띄운다. 테스트가 실패하면 커밋하지 않고 보고한다. force push와 히스토리 수정은 하지 않는다.
 
 ## 새 도메인 추가
 

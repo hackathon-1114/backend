@@ -1,6 +1,27 @@
-# Hackathon Backend (Spring Boot)
+# Backend (Spring Boot)
 
-MEDILUX × 잇타 × UMC 하프 해커톤용 백엔드 보일러플레이트.
+운동 중 자세와 움직임 변화를 기록하고, 쌓인 기록에서 사용자가 몰랐던 패턴을 찾아 주는 서비스의 백엔드. 프론트 저장소는 [hackathon-1114/frontend](https://github.com/hackathon-1114/frontend).
+
+## 지금 있는 API
+
+| 경로 | 내용 |
+|---|---|
+| `/api/workouts` | 운동 기록 CRUD (종류, 시각, 시간, 거리, 강도, 기분, 메모) |
+| `POST /api/insights/analyze` | 운동 기록과 자세 점검 기록을 AI가 분석해 패턴 3개 반환 (3~12초) |
+| `GET /api/insights` | 마지막 분석 결과 |
+| `POST /api/form-checks` | 영상에서 뽑은 장면 1~12장을 AI가 보고 점수, 잘한 점, 지적 반환 (7~20초) |
+| `GET /api/form-checks` | 자세 점검 기록 |
+| `/api/ai/chat`, `/api/ai/json` | 범용 AI 호출 (사진 입력 가능) |
+| `/api/samples` | 새 도메인을 만들 때 복사하는 CRUD 템플릿 |
+
+유저 1에는 5주치 운동 기록과 자세 점검 기록이 시드로 들어 있다. 정확한 요청과 응답 모양은 Swagger에서 본다.
+
+## 프론트가 가져다 쓸 코드
+
+서버가 띄우는 시험 페이지 두 개에 프론트용 코드가 들어 있다.
+
+- `/pose-test.html`: 카메라나 영상 파일에서 MediaPipe로 관절을 추적해 스쿼트 횟수, 깊이, 상체 기울기, 무릎 간격을 실시간으로 잰다. 음성 안내 포함. 소스의 `measure`, `update`, `findings`가 핵심이다
+- `/form-check.html`: 영상에서 장면을 뽑아 `POST /api/form-checks`로 보낸다. 소스의 `extractFrames`가 핵심이다
 
 - Java 21 / Spring Boot 3.5 / Gradle 8.14
 - JPA + H2(로컬) / PostgreSQL(prod)

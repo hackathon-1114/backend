@@ -5,24 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>실시간 스쿼트 추적 시험</title>
 <style>
-  body { font-family: -apple-system, "Apple SD Gothic Neo", sans-serif; max-width: 760px; margin: 20px auto; padding: 0 16px; color: #111; }
+  body { font-family: -apple-system, "Apple SD Gothic Neo", sans-serif; max-width: 760px; margin: 16px auto; padding: 0 12px; color: #111; }
   h1 { font-size: 20px; }
   .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
   button, input[type=file] { font-size: 15px; padding: 8px; }
-  #stage { position: relative; background: #000; min-height: 240px; }
+  #stage { position: relative; background: #000; min-height: 200px; }
   #video, #overlay { width: 100%; display: block; }
   #overlay { position: absolute; left: 0; top: 0; height: 100%; }
   #count { font-size: 56px; font-weight: 700; line-height: 1; }
   .stat { font-size: 14px; color: #444; }
   #cue { font-size: 18px; font-weight: 600; min-height: 26px; color: #b45309; }
-  table { border-collapse: collapse; font-size: 14px; margin-top: 8px; }
-  td, th { border: 1px solid #ddd; padding: 4px 10px; text-align: right; }
+  table { border-collapse: collapse; font-size: 13px; margin-top: 8px; width: 100%; }
+  td, th { border: 1px solid #ddd; padding: 4px 6px; text-align: right; }
+  td:last-child, th:last-child { text-align: left; }
   .muted { color: #666; font-size: 13px; }
 </style>
 </head>
 <body>
 <h1>실시간 스쿼트 추적 시험 페이지</h1>
-<p class="muted">MediaPipe가 브라우저 안에서 관절을 추적합니다. 서버로 영상을 보내지 않습니다. 카메라는 몸 옆이나 대각선에서 전신이 보이게 2~3m 거리에 고정하세요.</p>
+<p class="muted">MediaPipe가 브라우저 안에서 관절을 추적합니다. 영상은 서버로 보내지 않습니다. 휴대폰을 세워 두고 2~3m 떨어져 전신이 보이게 서세요. 옆에서 찍으면 깊이와 상체 기울기를, 정면에서 찍으면 무릎 모임과 좌우 쏠림을 봅니다.</p>
 
 <div class="row">
   <button id="camera" type="button">카메라로 시작</button>
@@ -43,7 +44,7 @@
 </div>
 
 <table>
-  <thead><tr><th>회</th><th>최저 무릎 각도</th><th>걸린 시간</th><th>최대 상체 기울기</th></tr></thead>
+  <thead><tr><th>회</th><th>방향</th><th>깊이</th><th>시간</th><th>상체 기울기</th><th>무릎/발목 간격</th><th>관찰</th></tr></thead>
   <tbody id="reps"></tbody>
 </table>
 
@@ -54,11 +55,22 @@ import { PoseLandmarker, FilesetResolver, DrawingUtils }
 const WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm';
 const MODEL = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
 
-// 무릎 각도(도) 기준. 서 있으면 약 170~180, 허벅지가 바닥과 평행하면 약 90
-const UP = 160;      // 이 위로 올라오면 한 번이 끝난 것
-const START = 150;   // 이 아래로 내려가면 한 번이 시작된 것
-const DEEP = 100;    // 최저 각도가 이보다 작아야 횟수로 센다
+// ── 기준값. 전부 "엉덩이 높이 비율"(서 있을 때 1)과 화면상 각도로 정한다 ──────────────────
+// 횟수는 무릎 각도가 아니라 엉덩이 높이로 센다. 무릎 각도는 정면에서 찍으면 거의 변하지 않기 때문이다.
+const REP_START = 0.90;     // 엉덩이가 서 있을 때의 90% 아래로 내려오면 한 번이 시작
+const REP_END = 0.93;       // 93% 위로 돌아오면 한 번이 끝
+const REP_COUNTED = 0.80;   // 최저점이 80% 아래여야 횟수로 센다 (그 위는 "얕은 시도")
 const MIN_VISIBILITY = 0.5;
+const FRONT_VIEW_RATIO = 0.45;  // 어깨 너비 / 몸통 길이가 이보다 크면 정면으로 본다
+// 허리를 숙여 물건을 집는 동작은 엉덩이가 내려가도 스쿼트가 아니다. 상체가 크게 접히는지로 걸러낸다
+const BEND_LEAN = 65;       // 측면: 상체가 65도 넘게 기울고
+const BEND_THIGH = 30;      //       허벅지는 수평보다 30도 넘게 서 있으면 숙이기
+const BEND_TORSO = 0.60;    // 정면: 몸통이 서 있을 때 길이의 60% 아래로 짧아 보이면 숙이기
+// 관찰 기준
+const SHALLOW_THIGH = 15;   // 측면: 최저점에서 허벅지가 수평보다 15도 넘게 위면 "깊이 부족"
+const LEAN_LIMIT = 50;      // 측면: 상체가 수직에서 50도 넘게 기울면 "상체 숙임 큼"
+const KNEE_IN_RATIO = 0.80; // 정면: 최저점 무릎 간격이 발목 간격의 80% 미만이면 "무릎 안쪽 모임"
+const SHIFT_LIMIT = 0.15;   // 정면: 골반 중심이 발 중심에서 발 간격의 15% 넘게 벗어나면 "좌우 쏠림"
 
 const $ = id => document.getElementById(id);
 const video = $('video');
@@ -68,26 +80,69 @@ const drawing = new DrawingUtils(ctx);
 
 let landmarker = null;
 let running = false;
-let phase = 'up';
-let minAngle = 180;
-let maxLean = 0;
-let repStart = 0;
-let smooth = null;
-const reps = [];
-const times = [];
+let onDone = null;
 let lastVideoTime = -1;
-// 검증용 기록: [영상 시각(초), 무릎 각도, 추론 시간(ms)]. 사람을 못 찾은 프레임은 각도가 null
-const series = [];
-window.poseTest = { reps, series };
+let t = null;            // 추적 상태
+const reps = [];
+const partials = [];     // 얕아서 세지 않은 시도
+const ignored = [];      // 스쿼트가 아니라고 보고 버린 동작 (허리 숙이기)
+const series = [];       // 검증용: [영상 시각, 엉덩이 높이 비율, 추론 ms]
+const times = [];
+window.poseTest = { reps, partials, ignored, series };
 
-// b를 꼭짓점으로 하는 각도. 좌표가 가로세로 따로 정규화돼 있어 픽셀로 되돌린 뒤 계산한다
-function angle(a, b, c) {
-  const w = video.videoWidth, h = video.videoHeight;
-  const ab = Math.atan2((a.y - b.y) * h, (a.x - b.x) * w);
-  const cb = Math.atan2((c.y - b.y) * h, (c.x - b.x) * w);
-  const deg = Math.abs((ab - cb) * 180 / Math.PI);
-  return deg > 180 ? 360 - deg : deg;
+function newTracker() {
+  return { standing: 0, standingTorso: 0, smooth: null, phase: 'up', min: 1, bottom: null, maxLean: 0, minTorso: 1, start: 0, views: [] };
 }
+
+// 화면 좌표(픽셀)로 바꾼 관절에서 한 프레임의 측정값을 만든다
+function measure(lm) {
+  const w = video.videoWidth, h = video.videoHeight;
+  const p = i => ({ x: lm[i].x * w, y: lm[i].y * h, v: lm[i].visibility });
+  const L = { shoulder: p(11), hip: p(23), knee: p(25), ankle: p(27) };
+  const R = { shoulder: p(12), hip: p(24), knee: p(26), ankle: p(28) };
+  const vis = s => Math.min(s.hip.v, s.knee.v, s.ankle.v);
+  if (Math.max(vis(L), vis(R)) < MIN_VISIBILITY) return null;
+
+  const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  const hip = mid(L.hip, R.hip), ankle = mid(L.ankle, R.ankle), shoulder = mid(L.shoulder, R.shoulder);
+  const torso = Math.hypot(shoulder.x - hip.x, shoulder.y - hip.y) || 1;
+  const front = Math.abs(L.shoulder.x - R.shoulder.x) / torso > FRONT_VIEW_RATIO;
+  const near = vis(L) >= vis(R) ? L : R;   // 측면에서는 카메라 쪽 다리를 쓴다
+
+  const deg = r => r * 180 / Math.PI;
+  const out = {
+    front,
+    legHeight: ankle.y - hip.y,                                   // 엉덩이가 발목보다 얼마나 위에 있나
+    torso,
+    lean: deg(Math.atan2(Math.abs(shoulder.x - hip.x), Math.abs(hip.y - shoulder.y))),
+    thigh: deg(Math.atan2(near.knee.y - near.hip.y, Math.abs(near.knee.x - near.hip.x))), // 서면 90, 수평이면 0
+    kneeRatio: null, shift: null,
+  };
+  const ankleGap = Math.abs(L.ankle.x - R.ankle.x);
+  if (front && ankleGap > torso * 0.15) {
+    out.kneeRatio = Math.abs(L.knee.x - R.knee.x) / ankleGap;
+    out.shift = (hip.x - ankle.x) / ankleGap;
+  }
+  return out;
+}
+
+function findings(rep) {
+  const f = [];
+  if (rep.view === 'side') {
+    if (rep.thighAngle > SHALLOW_THIGH) f.push('깊이 부족');
+    if (rep.maxLean > LEAN_LIMIT) f.push('상체 숙임 큼');
+  } else {
+    if (rep.kneeRatio != null && rep.kneeRatio < KNEE_IN_RATIO) f.push('무릎 안쪽 모임');
+    if (rep.shift != null && Math.abs(rep.shift) > SHIFT_LIMIT) f.push(rep.shift > 0 ? '화면 오른쪽으로 쏠림' : '화면 왼쪽으로 쏠림');
+  }
+  return f;
+}
+
+const CUES = {
+  '깊이 부족': '조금 더 깊이 앉아 보세요',
+  '상체 숙임 큼': '가슴을 펴고 상체를 세우세요',
+  '무릎 안쪽 모임': '무릎을 바깥으로 밀어 주세요',
+};
 
 function say(text) {
   $('cue').textContent = text;
@@ -103,29 +158,48 @@ function addRep(rep) {
   reps.push(rep);
   $('count').textContent = reps.length;
   const tr = document.createElement('tr');
-  [reps.length, rep.minKneeAngle + '°', (rep.durationMs / 1000).toFixed(1) + '초', rep.maxTorsoLean + '°']
+  [reps.length, rep.view === 'side' ? '측면' : '정면', Math.round(rep.depth * 100) + '%',
+    (rep.durationMs / 1000).toFixed(1) + '초', Math.round(rep.maxLean) + '°',
+    rep.kneeRatio == null ? '-' : rep.kneeRatio.toFixed(2), rep.findings.join(', ') || '없음']
     .forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.append(td); });
   $('reps').append(tr);
+  const cue = rep.findings.map(f => CUES[f]).find(Boolean);
+  say(cue ? reps.length + '. ' + cue : String(reps.length));
 }
 
-function update(knee, lean, now) {
-  smooth = smooth == null ? knee : smooth * 0.5 + knee * 0.5;   // 떨림 완화
-  if (phase === 'up') {
-    if (smooth < START) { phase = 'moving'; minAngle = smooth; maxLean = lean; repStart = now; }
-    return;
+function update(m, now) {
+  // 서 있을 때의 엉덩이 높이를 기준으로 삼는다. 조금씩 낮춰 가며 최댓값을 따라가 카메라 거리 변화에 적응한다
+  t.standing = Math.max(t.standing * 0.999, m.legHeight);
+  t.standingTorso = Math.max(t.standingTorso * 0.999, m.torso);
+  const torsoRatio = m.torso / t.standingTorso;
+  const ratio = m.legHeight / t.standing;
+  t.smooth = t.smooth == null ? ratio : t.smooth * 0.6 + ratio * 0.4;
+  if (t.phase === 'up') {
+    if (t.smooth < REP_START) { t.phase = 'moving'; t.min = t.smooth; t.bottom = m; t.maxLean = m.lean; t.minTorso = torsoRatio; t.start = now; t.views = []; }
+    return t.smooth;
   }
-  minAngle = Math.min(minAngle, smooth);
-  maxLean = Math.max(maxLean, lean);
-  if (smooth > UP) {
-    if (minAngle <= DEEP) {
-      addRep({ minKneeAngle: Math.round(minAngle), durationMs: Math.round(now - repStart), maxTorsoLean: Math.round(maxLean) });
-      say(String(reps.length));
-    } else if (minAngle < 135) {
-      say('더 깊이 앉아 보세요');
-    }
-    phase = 'up';
-    minAngle = 180;
+  t.views.push(m.front);
+  t.maxLean = Math.max(t.maxLean, m.lean);
+  t.minTorso = Math.min(t.minTorso, torsoRatio);
+  if (t.smooth < t.min) { t.min = t.smooth; t.bottom = m; }
+  if (t.smooth > REP_END) {
+    const front = t.views.filter(Boolean).length > t.views.length / 2;
+    const rep = {
+      view: front ? 'front' : 'side', depth: +t.min.toFixed(3), durationMs: Math.round(now - t.start),
+      maxLean: +t.maxLean.toFixed(1), thighAngle: +t.bottom.thigh.toFixed(1),
+      kneeRatio: t.bottom.kneeRatio == null ? null : +t.bottom.kneeRatio.toFixed(3),
+      shift: t.bottom.shift == null ? null : +t.bottom.shift.toFixed(3),
+      minTorso: +t.minTorso.toFixed(3),
+    };
+    rep.findings = findings(rep);
+    const bend = front ? rep.minTorso < BEND_TORSO : (rep.maxLean > BEND_LEAN && rep.thighAngle > BEND_THIGH);
+    if (bend) ignored.push(rep);
+    else if (t.min <= REP_COUNTED) addRep(rep);
+    else { partials.push(rep); say('더 깊이 앉아 보세요'); }
+    t.phase = 'up';
+    t.min = 1;
   }
+  return t.smooth;
 }
 
 function frame() {
@@ -138,41 +212,35 @@ function frame() {
     const took = performance.now() - now;
     times.push(took);
     if (times.length > 30) times.shift();
-    let recorded = null;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    let ratio = null;
     const lm = result.landmarks[0];
     if (!lm) {
       $('live').textContent = '사람을 찾지 못했습니다';
     } else {
       drawing.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS, { color: '#22c55e', lineWidth: 3 });
       drawing.drawLandmarks(lm, { color: '#ffffff', radius: 3 });
-      // 어깨, 엉덩이, 무릎, 발목. 더 잘 보이는 쪽 다리를 쓴다
-      const sides = [[11, 23, 25, 27], [12, 24, 26, 28]].map(ids => ids.map(i => lm[i]));
-      const vis = side => Math.min(side[1].visibility, side[2].visibility, side[3].visibility);
-      const side = vis(sides[0]) >= vis(sides[1]) ? sides[0] : sides[1];
-      if (vis(side) < MIN_VISIBILITY) {
+      const m = measure(lm);
+      if (!m) {
         $('live').textContent = '다리가 가려졌습니다. 전신이 보이게 해 주세요';
       } else {
-        const [shoulder, hip, knee, ankle] = side;
-        const kneeAngle = angle(hip, knee, ankle);
-        const lean = Math.atan2(Math.abs(shoulder.x - hip.x) * video.videoWidth,
-                                Math.abs(hip.y - shoulder.y) * video.videoHeight) * 180 / Math.PI;
-        update(kneeAngle, lean, now);
-        recorded = Math.round(kneeAngle);
+        // 영상 파일은 영상 시각을, 카메라는 실제 시각을 쓴다. 빨리 감기로 시험해도 반복 시간이 맞게 나온다
+        ratio = update(m, video.srcObject ? now : video.currentTime * 1000);
         const avg = times.reduce((s, v) => s + v, 0) / times.length;
-        $('live').textContent = '무릎 ' + Math.round(kneeAngle) + '° · 상체 기울기 ' + Math.round(lean)
-          + '° · 추론 ' + avg.toFixed(1) + 'ms';
+        $('live').textContent = (m.front ? '정면' : '측면') + ' · 엉덩이 높이 ' + Math.round(ratio * 100)
+          + '% · 상체 기울기 ' + Math.round(m.lean) + '° · 추론 ' + avg.toFixed(1) + 'ms';
       }
     }
-    series.push([+video.currentTime.toFixed(2), recorded, +took.toFixed(1)]);
+    series.push([+video.currentTime.toFixed(2), ratio == null ? null : +ratio.toFixed(3), +took.toFixed(1)]);
   }
   if (video.ended) { stop('영상이 끝났습니다'); return; }
   requestAnimationFrame(frame);
 }
 
 function reset() {
-  phase = 'up'; minAngle = 180; smooth = null; reps.length = 0; times.length = 0; series.length = 0; lastVideoTime = -1;
+  t = newTracker();
+  reps.length = 0; partials.length = 0; ignored.length = 0; series.length = 0; times.length = 0; lastVideoTime = -1;
   $('count').textContent = '0'; $('reps').replaceChildren(); $('cue').textContent = '';
 }
 
@@ -188,23 +256,42 @@ async function start(setSource) {
     requestAnimationFrame(frame);
   } catch (e) {
     $('status').textContent = '시작 실패: ' + e.message;
+    if (onDone) { const done = onDone; onDone = null; done({ error: e.message }); }
   }
 }
 
 function stop(message) {
   running = false;
-  if (video.srcObject) { video.srcObject.getTracks().forEach(t => t.stop()); video.srcObject = null; }
+  if (video.srcObject) { video.srcObject.getTracks().forEach(tr => tr.stop()); video.srcObject = null; }
   if (message) $('status').textContent = message + ' · 총 ' + reps.length + '회';
+  if (onDone && message) {
+    const done = onDone; onDone = null;
+    const detected = series.filter(r => r[1] != null).length;
+    done({ reps: reps.map(r => ({ ...r })), partials: partials.map(r => ({ ...r })), ignored: ignored.map(r => ({ ...r })), frames: series.length,
+      detectedPct: series.length ? Math.round(detected / series.length * 100) : 0 });
+  }
 }
+
+// 검증용: 영상 주소 하나를 끝까지 돌리고 결과를 돌려준다. rate로 빨리 감을 수 있다
+window.poseTest.run = (url, rate = 1) => new Promise(resolve => {
+  onDone = resolve;
+  start(async () => {
+    const blob = await (await fetch(url)).blob();
+    const type = blob.type && blob.type !== 'application/octet-stream' ? blob.type : 'video/mp4';
+    video.src = URL.createObjectURL(new Blob([blob], { type }));
+    video.playbackRate = rate;
+  });
+});
 
 $('camera').addEventListener('click', () => start(async () => {
   video.removeAttribute('src');
+  video.playbackRate = 1;
   video.srcObject = await navigator.mediaDevices.getUserMedia(
     { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
 }));
 $('file').addEventListener('change', e => {
   const file = e.target.files[0];
-  if (file) start(async () => { video.src = URL.createObjectURL(file); });
+  if (file) start(async () => { video.playbackRate = 1; video.src = URL.createObjectURL(file); });
 });
 $('stop').addEventListener('click', () => { video.pause(); stop('정지했습니다'); });
 
@@ -221,9 +308,7 @@ try {
   warm.getContext('2d').fillRect(0, 0, 256, 256);
   for (let i = 0; i < 3; i++) landmarker.detectForVideo(warm, performance.now());
   $('status').textContent = '준비됨. 카메라로 시작하거나 영상 파일을 고르세요';
-  // 자동 시험용: ?src=영상주소 로 열면 바로 재생하며 추적한다 (CORS를 허용하는 주소만)
-  const src = new URLSearchParams(location.search).get('src');
-  if (src) start(async () => { video.crossOrigin = 'anonymous'; video.src = src; });
+  window.poseTest.ready = true;
 } catch (e) {
   $('status').textContent = '모델을 불러오지 못했습니다: ' + e.message;
 }
