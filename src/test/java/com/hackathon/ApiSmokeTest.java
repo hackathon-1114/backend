@@ -129,6 +129,8 @@ class ApiSmokeTest {
                 .andExpect(jsonPath("$.code").value("FORMCHECK404"));
 
         mvc.perform(get("/form-check.html")).andExpect(status().isOk());
+        mvc.perform(get("/pose-test.html")).andExpect(status().isOk());
+        mvc.perform(get("/index.html")).andExpect(status().isOk());
     }
 
     @Test

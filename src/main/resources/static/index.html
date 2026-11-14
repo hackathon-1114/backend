@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>움직임 패턴 코치 (시연용)</title>
+<style>
+  :root { --line: #e2e2e2; --ink: #111; --sub: #666; --accent: #1d4ed8; --warn: #b45309; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Apple SD Gothic Neo", sans-serif; margin: 0; color: var(--ink); background: #fafafa; }
+  header { padding: 14px 16px 0; max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--sub); font-size: 13px; }
+  nav { display: flex; gap: 4px; max-width: 760px; margin: 12px auto 0; padding: 0 12px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+  nav button { flex: 1; min-width: 78px; padding: 10px 6px; font-size: 14px; border: 0; background: none; border-bottom: 3px solid transparent; cursor: pointer; color: var(--sub); }
+  nav button.on { border-color: var(--accent); color: var(--ink); font-weight: 700; }
+  main { max-width: 760px; margin: 0 auto; padding: 16px; }
+  section { display: none; }
+  section.on { display: block; }
+  h2 { font-size: 17px; margin: 0 0 4px; }
+  label { display: block; font-size: 13px; color: #444; margin: 12px 0 4px; }
+  input[type=text], input[type=number], select { width: 100%; font-size: 16px; padding: 9px; border: 1px solid #bbb; border-radius: 6px; background: #fff; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  button.go { margin-top: 14px; font-size: 16px; padding: 11px 16px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer; }
+  button.plain { margin-top: 14px; font-size: 15px; padding: 10px 14px; border: 1px solid #bbb; border-radius: 8px; background: #fff; cursor: pointer; }
+  button:disabled { opacity: .5; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
+  .card strong { display: block; margin-bottom: 4px; }
+  .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: #fef3c7; color: var(--warn); margin-left: 6px; vertical-align: middle; }
+  .msg { margin-top: 10px; font-size: 14px; color: var(--warn); min-height: 20px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; margin-top: 8px; }
+  td, th { border-bottom: 1px solid var(--line); padding: 6px 4px; text-align: left; }
+  td.num { text-align: right; }
+  iframe { width: 100%; height: 1500px; border: 1px solid var(--line); border-radius: 10px; background: #fff; margin-top: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>움직임 패턴 코치 <span class="tag">시연용 화면</span></h1>
+  <div class="sub">문진과 체성분, 카메라로 잰 움직임을 엮어 반복 중에 나타나는 변화를 찾습니다. 인바디와 근전도는 가상 데이터입니다.</div>
+  <label for="user">사용자</label>
+  <select id="user">
+    <option value="1">예시 사용자 (5주치 기록 있음)</option>
+    <option value="new">새 사용자 (기록 없음)</option>
+  </select>
+</header>
+
+<nav>
+  <button data-tab="survey" class="on">① 문진</button>
+  <button data-tab="inbody">② 인바디</button>
+  <button data-tab="camera">③ 카메라</button>
+  <button data-tab="pattern">④ 패턴</button>
+</nav>
+
+<main>
+  <section id="survey" class="on">
+    <h2>사용자 문진</h2>
+    <div class="sub">어떤 동작에서 불편함을 느끼는지 적어 두면 움직임 측정값과 연결해 설명합니다.</div>
+    <label for="goal">운동 목표</label>
+    <input id="goal" type="text" maxlength="100" placeholder="예: 하체 근력 강화">
+    <label for="experience">운동 경력</label>
+    <input id="experience" type="text" maxlength="30" placeholder="예: 헬스 6개월">
+    <div class="two">
+      <div>
+        <label for="part">불편한 부위</label>
+        <select id="part">
+          <option value="">없음</option><option>왼쪽 무릎</option><option>오른쪽 무릎</option><option>허리</option>
+          <option>왼쪽 발목</option><option>오른쪽 발목</option><option>고관절</option><option>어깨</option>
+        </select>
+      </div>
+      <div>
+        <label for="level">정도 (0~10)</label>
+        <input id="level" type="number" min="0" max="10" value="3">
+      </div>
+    </div>
+    <label for="situation">어떤 상황에서</label>
+    <input id="situation" type="text" maxlength="100" placeholder="예: 계단을 내려갈 때">
+    <button class="go" id="saveSurvey" type="button">문진 저장</button>
+    <div class="msg" id="surveyMsg"></div>
+  </section>
+
+  <section id="inbody">
+    <h2>인바디 분석</h2>
+    <div class="sub">체성분과 부위별 근육량의 좌우 차이를 봅니다. 인바디만으로 자세를 판단하지는 않습니다.</div>
+    <div id="inbodyView"></div>
+    <button class="go" id="sampleInbody" type="button">가상 인바디 데이터 불러오기</button>
+    <div class="two">
+      <div><label for="rightLeg">오른다리 근육량(kg)</label><input id="rightLeg" type="number" step="0.1" min="1" max="40" placeholder="9.3"></div>
+      <div><label for="leftLeg">왼다리 근육량(kg)</label><input id="leftLeg" type="number" step="0.1" min="1" max="40" placeholder="8.6"></div>
+    </div>
+    <button class="plain" id="manualInbody" type="button">직접 입력한 값 저장</button>
+    <div class="msg" id="inbodyMsg"></div>
+  </section>
+
+  <section id="camera">
+    <h2>AI 카메라 인식</h2>
+    <div class="sub">휴대폰을 세워 두고 2~3m 떨어져 전신이 보이게 섭니다. 끝나면 정지를 누르고 "세트 저장하고 AI 설명 받기"를 누르세요.</div>
+    <a id="cameraLink" href="/pose-test.html"><button class="plain" type="button">카메라 화면만 크게 열기</button></a>
+    <iframe id="cameraFrame" title="카메라 추적" allow="camera; autoplay"></iframe>
+  </section>
+
+  <section id="pattern">
+    <h2>움직임 변화 패턴</h2>
+    <div class="sub">쌓인 세트에서 반복되는 변화를 찾고, 문진과 인바디와 같은 방향인지 연결합니다. 통증을 예측하는 것이 아니라 부담이 실릴 수 있는 요인을 설명합니다.</div>
+    <div id="sets"></div>
+    <button class="go" id="analyze" type="button">패턴 분석 실행 (약 12초)</button>
+    <div class="msg" id="patternMsg"></div>
+    <div id="insights"></div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function userId() {
+  if ($('user').value !== 'new') return '1';
+  let id = null;
+  try { id = localStorage.getItem('demoUser'); } catch (e) { /* 저장소를 못 쓰면 이번 화면에서만 유지 */ }
+  if (!id) {
+    id = String(1000 + Math.floor(Math.random() * 900000));
+    try { localStorage.setItem('demoUser', id); } catch (e) { /* 무시 */ }
+  }
+  return id;
+}
+
+async function api(method, url, body) {
+  const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'X-User-Id': userId() },
+    body: body ? JSON.stringify(body) : undefined });
+  const data = await res.json();
+  if (!res.ok) { const err = new Error(data.message || data.code); err.code = data.code; throw err; }
+  return data.data;
+}
+
+function el(tag, text, className) {
+  const node = document.createElement(tag);
+  if (text != null) node.textContent = text;
+  if (className) node.className = className;
+  return node;
+}
+
+function card(title, lines, tag) {
+  const box = el('div', null, 'card');
+  const head = el('strong', title);
+  if (tag) head.append(el('span', tag, 'tag'));
+  box.append(head);
+  lines.filter(Boolean).forEach(text => box.append(el('div', text)));
+  return box;
+}
+
+// ── 문진 ──────────────────────────────────────────────────────────────────────────
+async function loadSurvey() {
+  $('surveyMsg').textContent = '';
+  ['goal', 'experience', 'situation'].forEach(id => { $(id).value = ''; });
+  $('part').value = ''; $('level').value = 3;
+  try {
+    const s = await api('GET', '/api/surveys/latest');
+    $('goal').value = s.goal || ''; $('experience').value = s.experience || '';
+    const d = s.discomforts[0];
+    if (d) { $('part').value = d.bodyPart; $('situation').value = d.situation || ''; $('level').value = d.level ?? 3; }
+    $('surveyMsg').textContent = '저장된 문진을 불러왔습니다.';
+  } catch (e) { if (e.code !== 'SURVEY404') $('surveyMsg').textContent = e.message; }
+}
+
+$('saveSurvey').addEventListener('click', async () => {
+  const part = $('part').value;
+  try {
+    await api('POST', '/api/surveys', { goal: $('goal').value || null, experience: $('experience').value || null,
+      discomforts: part ? [{ bodyPart: part, situation: $('situation').value || null, level: Number($('level').value) }] : [] });
+    $('surveyMsg').textContent = '저장했습니다. 다음은 인바디입니다.';
+  } catch (e) { $('surveyMsg').textContent = e.message; }
+});
+
+// ── 인바디 ────────────────────────────────────────────────────────────────────────
+function showInbody(r) {
+  const view = $('inbodyView');
+  view.replaceChildren();
+  if (!r) { view.append(card('저장된 인바디가 없습니다', ['아래에서 가상 데이터를 불러오거나 값을 직접 넣어 주세요.'])); return; }
+  const kg = v => v == null ? '-' : v + 'kg';
+  const tag = r.source === 'sample' ? '가상 데이터' : r.source === 'photo' ? '사진에서 읽음' : '직접 입력';
+  const box = card(r.measuredAt + ' 측정', [], tag);
+  const table = el('table');
+  [['체중', kg(r.weightKg)], ['골격근량', kg(r.skeletalMuscleKg)], ['체지방률', r.bodyFatPercent == null ? '-' : r.bodyFatPercent + '%'],
+   ['오른팔 / 왼팔', kg(r.rightArmKg) + ' / ' + kg(r.leftArmKg)], ['오른다리 / 왼다리', kg(r.rightLegKg) + ' / ' + kg(r.leftLegKg)]]
+    .forEach(([k, v]) => { const tr = el('tr'); tr.append(el('td', k), el('td', v, 'num')); table.append(tr); });
+  box.append(table);
+  view.append(box);
+  if (r.legDiffPct != null) {
+    view.append(card('다리 근육량 좌우 차이 ' + r.legDiffPct + '%', [
+      r.weakerLeg ? (r.weakerLeg === 'left' ? '왼쪽' : '오른쪽') + ' 다리의 근육량이 더 적습니다.' : '좌우가 같습니다.',
+      '이 차이가 실제 움직임에서도 나타나는지는 정면 카메라 세트에서 확인합니다.']));
+  }
+}
+
+async function loadInbody() {
+  $('inbodyMsg').textContent = '';
+  try { showInbody((await api('GET', '/api/inbody'))[0]); } catch (e) { $('inbodyMsg').textContent = e.message; }
+}
+
+$('sampleInbody').addEventListener('click', async () => {
+  try { showInbody(await api('POST', '/api/inbody', { sample: true })); $('inbodyMsg').textContent = '가상 데이터를 저장했습니다.'; }
+  catch (e) { $('inbodyMsg').textContent = e.message; }
+});
+
+$('manualInbody').addEventListener('click', async () => {
+  const right = Number($('rightLeg').value), left = Number($('leftLeg').value);
+  if (!(right > 0) || !(left > 0)) { $('inbodyMsg').textContent = '양쪽 다리 근육량을 모두 넣어 주세요.'; return; }
+  try { showInbody(await api('POST', '/api/inbody', { values: { rightLegKg: right, leftLegKg: left } })); $('inbodyMsg').textContent = '저장했습니다.'; }
+  catch (e) { $('inbodyMsg').textContent = e.message; }
+});
+
+// ── 패턴 ──────────────────────────────────────────────────────────────────────────
+function showInsights(list) {
+  $('insights').replaceChildren(...list.map(p => card(p.title, [p.evidence, '→ ' + p.suggestion])));
+}
+
+async function loadPattern() {
+  $('patternMsg').textContent = '';
+  try {
+    const sets = await api('GET', '/api/sets');
+    const box = card('카메라 세트 기록 ' + sets.length + '건', sets.length ? [] : ['아직 없습니다. 카메라 탭에서 한 세트를 저장해 주세요.']);
+    if (sets.length) {
+      const table = el('table');
+      const head = el('tr'); ['일시', '횟수', '평균 깊이', '무너진 회차'].forEach(h => head.append(el('th', h)));
+      table.append(head);
+      sets.slice(0, 8).forEach(s => {
+        const tr = el('tr');
+        tr.append(el('td', s.performedAt.replace('T', ' ').slice(5, 16)), el('td', s.stats.repCount + '회'),
+          el('td', Math.round(s.stats.avgDepth * 100) + '%'),
+          el('td', s.stats.fadeFromRep ? s.stats.fadeFromRep + '회째부터' : '끝까지 일정'));
+        table.append(tr);
+      });
+      box.append(table, el('div', '깊이는 최저점의 엉덩이 높이 비율이라 낮을수록 깊이 앉은 것입니다.', 'sub'));
+    }
+    $('sets').replaceChildren(box);
+    showInsights(await api('GET', '/api/insights'));
+  } catch (e) { $('patternMsg').textContent = e.message; }
+}
+
+$('analyze').addEventListener('click', async () => {
+  $('analyze').disabled = true;
+  $('patternMsg').textContent = '기록을 분석하는 중입니다...';
+  try { showInsights(await api('POST', '/api/insights/analyze')); $('patternMsg').textContent = ''; }
+  catch (e) { $('patternMsg').textContent = e.message; }
+  finally { $('analyze').disabled = false; }
+});
+
+// ── 탭과 사용자 전환 ───────────────────────────────────────────────────────────────
+const loaders = { survey: loadSurvey, inbody: loadInbody, pattern: loadPattern, camera: () => {
+  const url = '/pose-test.html?user=' + userId();
+  $('cameraLink').href = url;
+  if ($('cameraFrame').getAttribute('src') !== url) $('cameraFrame').src = url;   // 탭을 벗어나도 카메라 화면은 유지
+} };
+
+function open(tab) {
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  document.querySelectorAll('section').forEach(s => s.classList.toggle('on', s.id === tab));
+  loaders[tab]();
+}
+
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => open(b.dataset.tab)));
+$('user').addEventListener('change', () => open(document.querySelector('nav button.on').dataset.tab));
+open('survey');
+</script>
+</body>
+</html>

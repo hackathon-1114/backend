@@ -23,6 +23,7 @@
 </style>
 </head>
 <body>
+<p id="back" class="muted" hidden><a href="/">← 처음 화면으로</a></p>
 <h1>실시간 스쿼트 추적 시험 페이지</h1>
 <p class="muted">MediaPipe가 브라우저 안에서 관절을 추적합니다. 영상은 서버로 보내지 않습니다. 휴대폰을 세워 두고 2~3m 떨어져 전신이 보이게 서세요. 옆에서 찍으면 깊이와 상체 기울기를, 정면에서 찍으면 무릎 모임과 좌우 쏠림을 봅니다.</p>
 
@@ -81,6 +82,7 @@ const KNEE_IN_RATIO = 0.80; // 정면: 최저점 무릎 간격이 발목 간격�
 const SHIFT_LIMIT = 0.25;   // 정면: 골반 중심이 발 중심에서 발 간격의 25% 넘게 벗어나면 "좌우 쏠림". 카메라가 비스듬하면 오탐이 난다
 
 const $ = id => document.getElementById(id);
+if (window.top === window) $('back').hidden = false;   // 시연 화면 안에 들어가 있을 때는 숨긴다
 const video = $('video');
 const canvas = $('overlay');
 const ctx = canvas.getContext('2d');
