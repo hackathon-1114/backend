@@ -30,6 +30,8 @@
 }
 
 * { box-sizing: border-box; }
+/* .btn처럼 display를 지정한 요소도 hidden 속성으로 숨겨지게 한다 */
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
@@ -100,7 +102,8 @@ input[type=text], input[type=number] {
 .btn:disabled { opacity: .45; }
 :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
 
-.msg { margin-top: 10px; font-size: 14px; color: var(--red); min-height: 21px; }
+.msg { margin-top: 10px; font-size: 14px; color: var(--red); }
+.msg:empty { display: none; }
 
 /* 한 줄 관찰. 왼쪽 원판 색이 상태를 뜻한다 */
 .finding { display: grid; grid-template-columns: 14px 1fr; gap: 12px; padding: 16px 0; border-top: 1px solid var(--rule); }

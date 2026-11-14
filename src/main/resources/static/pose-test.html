@@ -31,12 +31,12 @@
         <div class="sub" id="live"></div>
       </div>
     </div>
-    <div id="liveChart"></div>
     <div class="row" style="margin-top: 18px">
       <button class="btn" id="camera" type="button">카메라로 시작</button>
       <button class="btn quiet" id="stop" type="button">정지</button>
     </div>
     <p class="note" id="status">모델을 불러오는 중입니다</p>
+    <div id="liveChart"></div>
   </div>
 
   <div class="sheet" id="saveSheet" hidden>
@@ -182,7 +182,8 @@ const CUES = {
 };
 
 function say(text) {
-  $('cue').textContent = text;
+  // 횟수는 큰 숫자로 이미 보이므로 글자 안내에는 교정 문장만 남긴다. 음성은 횟수까지 읽는다
+  $('cue').textContent = /^\d+$/.test(text) ? '' : text.replace(/^\d+\.\s*/, '');
   if (!$('voice').checked || !('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
@@ -290,7 +291,7 @@ function reset() {
   t = newTracker();
   reps.length = 0; partials.length = 0; ignored.length = 0; series.length = 0; times.length = 0; lastVideoTime = -1;
   diagonalHintGiven = false;
-  $('count').textContent = '0'; $('reps').replaceChildren(); $('cue').textContent = '';
+  $('count').textContent = '0'; $('reps').replaceChildren(); $('cue').textContent = '전신이 보이게 서 주세요';
   $('liveChart').replaceChildren(); $('saveSheet').hidden = true; $('toResult').hidden = true; $('save').hidden = false; $('saveMsg').textContent = '';
 }
 

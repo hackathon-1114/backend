@@ -16,8 +16,11 @@ const MM = (() => {
     return id;
   }
 
+  // 백엔드와 다른 주소에서 이 화면을 띄울 때는 페이지에서 window.MM_API_BASE에 백엔드 주소를 넣는다
+  const BASE = window.MM_API_BASE || '';
+
   async function api(method, url, body) {
-    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'X-User-Id': userId() },
+    const res = await fetch(BASE + url, { method, headers: { 'Content-Type': 'application/json', 'X-User-Id': userId() },
       body: body ? JSON.stringify(body) : undefined });
     const data = await res.json();
     if (!res.ok) { const err = new Error(data.message || data.code); err.code = data.code; throw err; }
@@ -58,7 +61,9 @@ const MM = (() => {
     const pad = compact ? 8 : 20;
     const width = pad * 2 + step * (n - 1);
     const top = 6, floor = compact ? 70 : 150, height = floor + (compact ? 8 : 34);
-    const y = depth => top + Math.max(0, Math.min(1, (1 - depth) / 0.9)) * (floor - top);
+    // 가장 깊은 반복이 바닥 근처에 오도록 눈금을 맞춘다. 여러 세트를 나란히 그릴 때는 opts.deepest로 같은 눈금을 쓴다
+    const deepest = opts.deepest || deepestOf(reps);
+    const y = depth => top + Math.max(0, Math.min(1, (1 - depth) / deepest)) * (floor - top);
     const chart = svg('svg', { viewBox: '0 0 ' + Math.max(width, compact ? 150 : 320) + ' ' + height, class: 'repchart', role: 'img' });
     chart.setAttribute('aria-label', '반복별 앉은 깊이' + (fadeFrom ? ', ' + fadeFrom + '회째부터 얕아짐' : ''));
 
@@ -88,11 +93,15 @@ const MM = (() => {
     return chart;
   }
 
+  function deepestOf(reps) {
+    return Math.max(0.3, ...reps.map(r => 1 - r.depth)) * 1.1;
+  }
+
   function when(iso) {
     const d = new Date(iso);
     const day = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()];
     return (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + day + '요일 ' + (d.getHours() < 12 ? '오전 ' : '오후 ') + (d.getHours() % 12 || 12) + '시';
   }
 
-  return { $, userKind, setUserKind, userId, api, el, finding, repChart, when };
+  return { $, userKind, setUserKind, userId, api, el, finding, repChart, deepestOf, when };
 })();
