@@ -28,6 +28,9 @@ public class FormCheckService {
     /** 배포 서버 시계는 UTC라서 한국 시간을 명시한다 */
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
+    /** 한 요청의 장면 전체 크기 상한 (base64 글자 수, 원본 약 4.5MB) */
+    static final long MAX_TOTAL_BASE64_LENGTH = 6_000_000;
+
     /**
      * 비전 모델은 운동 자세에서 없는 문제를 지어내는 경향이 보고돼 있다 (FormCoach, arXiv 2508.07501).
      * 그래서 보이는 것만, 장면 번호를 근거로 말하게 하고 "문제 없음"을 정상 답으로 허용한다.
@@ -65,6 +68,12 @@ public class FormCheckService {
 
     /** AI 호출이 몇 초 걸리므로 DB 트랜잭션으로 감싸지 않는다. */
     public FormCheckResponse check(Long userId, FormCheckRequest.Create req) {
+        // 장면은 768px JPEG면 장당 100KB 안팎이다. 원본 사진 12장을 그대로 보내 AI 비용을 키우는 요청은 막는다
+        long totalLength = req.frames().stream().mapToLong(f -> f.data().length()).sum();
+        if (totalLength > MAX_TOTAL_BASE64_LENGTH) {
+            throw new BusinessException(ErrorCode.FORMCHECK_TOO_LARGE);
+        }
+
         StringBuilder message = new StringBuilder()
                 .append("운동 종목: ").append(req.exercise()).append('\n')
                 .append("장면 수: ").append(req.frames().size()).append("장 (시간 순서)\n");

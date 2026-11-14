@@ -17,6 +17,8 @@ public enum ErrorCode {
     SAMPLE_NOT_FOUND(HttpStatus.NOT_FOUND, "SAMPLE404", "샘플을 찾을 수 없습니다."),
     WORKOUT_NOT_FOUND(HttpStatus.NOT_FOUND, "WORKOUT404", "운동 기록을 찾을 수 없습니다."),
     FORMCHECK_NOT_FOUND(HttpStatus.NOT_FOUND, "FORMCHECK404", "자세 점검 기록을 찾을 수 없습니다."),
+    FORMCHECK_TOO_LARGE(HttpStatus.BAD_REQUEST, "FORMCHECK400",
+            "장면 사진이 너무 큽니다. 긴 변 768px 정도로 줄여서 보내 주세요."),
     FORMCHECK_NOT_ANALYZABLE(HttpStatus.UNPROCESSABLE_ENTITY, "FORMCHECK422",
             "영상에서 운동하는 모습을 찾지 못했습니다. 전신이 보이게 다시 찍어 주세요."),
     INSIGHT_NOT_ENOUGH_DATA(HttpStatus.BAD_REQUEST, "INSIGHT400", "운동 기록이 5개 이상 있어야 패턴을 분석할 수 있습니다."),

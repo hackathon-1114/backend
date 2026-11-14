@@ -116,6 +116,14 @@ class ApiSmokeTest {
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.code").value("AI503"));
 
+        // 장면 전체 크기가 상한을 넘으면 AI를 부르기 전에 거절한다
+        String big = "A".repeat(3_100_000);
+        mvc.perform(post("/api/form-checks").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"exercise\":\"스쿼트\",\"frames\":[{\"mediaType\":\"image/jpeg\",\"data\":\"" + big
+                                + "\"},{\"mediaType\":\"image/jpeg\",\"data\":\"" + big + "\"}]}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("FORMCHECK400"));
+
         mvc.perform(get("/api/form-checks/9999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("FORMCHECK404"));
