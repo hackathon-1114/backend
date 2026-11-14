@@ -395,7 +395,7 @@ $('save').addEventListener('click', async () => {
       muscles: simulateEmg(reps), emgSimulated: true });
     const st = saved.stats;
     $('liveChart').replaceChildren(MM.repChart(saved.reps, st.fadeFromRep));
-    $('saveHeadline').textContent = st.fadeFromRep ? st.fadeFromRep + '회째부터 덜 앉기 시작했습니다' : st.repCount + '회 모두 같은 깊이로 앉았습니다';
+    $('saveHeadline').textContent = '측정 결과';
     $('saveSub').textContent = '설명을 만들고 있습니다. 15초쯤 걸립니다.';
     $('save').hidden = true;
     window.poseTest.saved = saved;
@@ -403,7 +403,6 @@ $('save').addEventListener('click', async () => {
     window.poseTest.saved = explained;
     const known = MM.cachedOverview();   // 결과 화면이 서버를 기다리지 않고 바로 뜨도록 받아 둔 내용에 끼워 넣는다
     if (known) { known.sets = [explained, ...known.sets.filter(x => x.id !== explained.id)]; MM.keepOverview(known); }
-    $('saveHeadline').textContent = explained.feedback.headline || $('saveHeadline').textContent;
     $('saveSub').textContent = explained.feedback.summary;
     $('toResult').hidden = false;
     say(explained.feedback.headline || explained.feedback.summary);

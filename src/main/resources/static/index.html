@@ -138,10 +138,8 @@ document.querySelectorAll('.chips').forEach(group => group.addEventListener('cli
 const picked = id => [...$(id).querySelectorAll('button.on')].map(b => b.textContent);
 const pick = (id, values) => $(id).querySelectorAll('button').forEach(b => b.classList.toggle('on', values.includes(b.textContent)));
 
-function headline(stats) {
-  if (stats.fadeFromRep) return stats.fadeFromRep + '회째부터 덜 앉기 시작했습니다';
-  return stats.repCount + '회 모두 같은 깊이로 앉았습니다';
-}
+// 제목은 화면 이름만 적는다. 몇 회째부터 달라졌는지는 그 아래 한 줄과 그래프가 보여 준다
+const fadeNote = stats => stats.fadeFromRep ? stats.fadeFromRep + '회째부터 덜 앉음' : '끝까지 같은 깊이';
 
 // ── 홈 ────────────────────────────────────────────────────────────────────────────
 function showInsights(items) {
@@ -163,8 +161,8 @@ function loadHome(data) {
     $('homeChart').replaceChildren();
   } else {
     const latest = sets[0];
-    $('homeHeadline').textContent = headline(latest.stats);
-    $('homeSub').textContent = when(latest.performedAt) + ' ' + latest.exercise + ' ' + latest.stats.repCount + '회';
+    $('homeHeadline').textContent = '최근 운동 측정 결과';
+    $('homeSub').textContent = when(latest.performedAt) + ' ' + latest.exercise + ' ' + latest.stats.repCount + '회, ' + fadeNote(latest.stats);
     $('homeChart').replaceChildren(repChart(latest.reps, latest.stats.fadeFromRep));
     const recent = sets.slice(0, 3).reverse();
     const top = MM.topOf(recent.flatMap(s => s.reps));
@@ -268,7 +266,7 @@ function showSet(set) {
   const st = set.stats, f = set.feedback;
   const kept = st.fadeFromRep ? st.fadeFromRep - 1 : st.repCount;
   $('resultWhen').textContent = when(set.performedAt) + ' ' + set.exercise + ' ' + st.repCount + '회';
-  $('resultHeadline').textContent = (f && f.headline) || headline(st);
+  $('resultHeadline').textContent = '측정 결과';
   const ringRow = el('div', null, 'ringrow');
   const ringText = el('div');
   ringText.append(el('strong', '처음 깊이를 지킨 반복'), el('div', kept === st.repCount ? '끝까지 같은 깊이로 앉았습니다.' : (kept + 1) + '회째부터 덜 앉거나 느려졌습니다.', 'sub'));
