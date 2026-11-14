@@ -1,11 +1,17 @@
 package com.hackathon.global.config;
 
+import com.hackathon.domain.bodyalert.dto.BodyAlertResponse;
+import com.hackathon.domain.bodyalert.entity.BodyAlert;
+import com.hackathon.domain.bodyalert.repository.BodyAlertRepository;
 import com.hackathon.domain.exerciseset.dto.ExerciseSetRequest;
+import com.hackathon.domain.exerciseset.dto.ExerciseSetResponse;
 import com.hackathon.domain.exerciseset.entity.ExerciseSet;
 import com.hackathon.domain.exerciseset.repository.ExerciseSetRepository;
 import com.hackathon.domain.formcheck.entity.FormCheck;
 import com.hackathon.domain.formcheck.repository.FormCheckRepository;
 import com.hackathon.domain.inbody.repository.InbodyRepository;
+import com.hackathon.domain.insight.entity.Insight;
+import com.hackathon.domain.insight.repository.InsightRepository;
 import com.hackathon.domain.inbody.service.InbodyService;
 import com.hackathon.domain.sample.entity.Sample;
 import com.hackathon.domain.sample.repository.SampleRepository;
@@ -37,6 +43,8 @@ public class SeedData implements ApplicationRunner {
     private final ExerciseSetRepository exerciseSetRepository;
     private final InbodyRepository inbodyRepository;
     private final SurveyRepository surveyRepository;
+    private final InsightRepository insightRepository;
+    private final BodyAlertRepository bodyAlertRepository;
     private final Json json;
 
     @Override
@@ -57,7 +65,16 @@ public class SeedData implements ApplicationRunner {
             formCheckRepository.saveAll(demoFormChecks(lastSunday));
         }
         if (exerciseSetRepository.count() == 0) {
-            exerciseSetRepository.saveAll(demoSets(lastSunday));
+            List<ExerciseSet> sets = demoSets(lastSunday);
+            // 가장 최근 세트에는 설명을 미리 붙여 둔다. 시연에서 AI 응답을 기다리지 않고 결과 화면이 바로 뜬다
+            sets.get(sets.size() - 1).attachFeedback(json.write(demoFeedback()));
+            exerciseSetRepository.saveAll(sets);
+        }
+        if (insightRepository.count() == 0) {
+            insightRepository.saveAll(demoInsights());
+        }
+        if (bodyAlertRepository.count() == 0) {
+            bodyAlertRepository.save(demoBodyAlert());
         }
         if (inbodyRepository.count() == 0) {
             // 가상 수치. 왼다리 근육량이 오른다리보다 7.5% 적다. 문진의 왼쪽 무릎 불편함과 같은 쪽으로 맞췄다
@@ -202,6 +219,54 @@ public class SeedData implements ApplicationRunner {
                 .exercise("스쿼트")
                 .performedAt(dateOf(lastSunday, weeksAgo, day).atTime(hour, minute))
                 .repsJson(json.write(reps))
+                .build();
+    }
+
+    // 아래 세 묶음은 이 시드 데이터로 AI가 실제로 낸 결과를 다듬어 옮긴 것이다. 예시 사용자의 화면이 처음부터 채워져 있게 한다.
+
+    private static ExerciseSetResponse.Feedback demoFeedback() {
+        return new ExerciseSetResponse.Feedback(
+                "5회째부터 덜 앉고 느려졌습니다",
+                "1~4회는 같은 깊이로 앉았지만 5회째부터 얕아지고 느려지며 상체가 더 숙여졌습니다. 아침에 한 세트는 끝까지 일정했습니다.",
+                List.of(
+                        new ExerciseSetResponse.Observation("5회째부터 깊이가 얕아짐", "깊이가 50%에서 10회째 66%까지 올라갔습니다.", ""),
+                        new ExerciseSetResponse.Observation("상체가 점점 숙여짐", "상체 기울기가 32도에서 47도로 커졌습니다.", "허리 주변에 부담이 실릴 수 있습니다."),
+                        new ExerciseSetResponse.Observation("반복 속도가 느려짐", "한 회에 걸린 시간이 2.2초에서 3.6초로 늘었습니다.", "")),
+                List.of("다음 세트는 4회에서 끊고 충분히 쉬어 보세요.", "내려갈 때 가슴을 세우고 2초 리듬을 유지해 보세요."),
+                List.of(
+                        new ExerciseSetResponse.Exercise("고블릿 스쿼트", "상체 기울기가 15도 늘어 상체를 세워 버티는 연습이 필요합니다.", "가벼운 덤벨을 가슴 앞에 들고 상체를 세운 채 8회씩 3세트 합니다."),
+                        new ExerciseSetResponse.Exercise("템포 박스 스쿼트", "5회째부터 깊이가 얕아져 같은 깊이를 끝까지 지키는 연습이 필요합니다.", "박스 높이까지 3초에 걸쳐 내려가 같은 깊이로 6회씩 반복합니다."),
+                        new ExerciseSetResponse.Exercise("스플릿 스쿼트", "인바디에서 왼다리 근육량이 7.5% 적어 좌우를 따로 쓰는 운동이 도움이 됩니다.", "한쪽씩 8회, 왼다리부터 같은 횟수로 합니다.")),
+                List.of("10회째까지 깊이 55% 이하 유지", "후반 상체 기울기 변화 5도 이내", "후반 속도 변화 20% 이내"));
+    }
+
+    private static List<Insight> demoInsights() {
+        return List.of(
+                Insight.builder().userId(1L).title("야근 뒤 밤 스쿼트에서만 자세가 무너져요")
+                        .evidence("수요일 밤 9~10시에 한 세트 두 번은 5~6회째부터 깊이가 12~14%p 얕아지고 속도가 40% 넘게 느려졌습니다. 토요일 아침 7시 세트는 10회 내내 같았습니다.")
+                        .suggestion("야근한 날에는 스쿼트를 4회씩 끊어서 하거나 토요일 아침으로 옮겨 보세요.").build(),
+                Insight.builder().userId(1L).title("무너지는 시점이 한 회 당겨졌어요")
+                        .evidence("2주 전 밤 세트는 6회째부터, 지난주 밤 세트는 5회째부터 얕아졌습니다. 후반 속도 저하도 42%에서 52%로 커졌습니다.")
+                        .suggestion("이번 주 밤 세트는 무게나 횟수를 줄이고 5회째 깊이를 지키는 것을 목표로 해 보세요.").build(),
+                Insight.builder().userId(1L).title("왼다리 근육량과 왼쪽 무릎 불편함이 같은 쪽이에요")
+                        .evidence("인바디에서 왼다리 근육량이 오른다리보다 7.5% 적고, 문진에서 계단을 내려갈 때 왼쪽 무릎이 불편하다고 하셨습니다. 한쪽 다리에 체중을 싣는 습관도 있습니다.")
+                        .suggestion("정면에서 한 세트를 찍어 무릎 간격이 좁아지는지 확인해 보세요.").build());
+    }
+
+    private BodyAlert demoBodyAlert() {
+        return BodyAlert.builder().userId(1L)
+                .summary("인바디와 문진이 모두 왼쪽 하체를 가리키고 있습니다. 실제 움직임에서도 차이가 나는지는 카메라로 확인해야 합니다.")
+                .areasJson(json.write(List.of(
+                        new BodyAlertResponse.Area("왼쪽 무릎 확인", "무릎", "왼쪽", "추가 확인 권장",
+                                "왼다리 근육량이 오른다리보다 7.5% 적고, 계단을 내려갈 때 왼쪽 무릎이 불편하다고 하셨습니다.",
+                                List.of("무릎 간격이 좁아지는지", "반복이 늘 때 깊이가 얕아지는지")),
+                        new BodyAlertResponse.Area("좌우 체중 쏠림", "골반", "양쪽", "추가 확인 권장",
+                                "한쪽 다리에 체중을 싣고 다리를 자주 꼬는 습관이 있고, 다리 근육량도 좌우 차이가 있습니다.",
+                                List.of("앉을 때 좌우로 쏠리는지", "일어설 때 한쪽으로 기우는지")),
+                        new BodyAlertResponse.Area("고관절 움직임", "고관절", "양쪽", "측정 필요",
+                                "하루 8시간 이상 앉아 계십니다. 인바디로는 고관절 움직임을 알 수 없습니다.",
+                                List.of("충분한 깊이까지 앉는지", "상체가 더 숙여지는지")))))
+                .nextStep("정면과 측면에서 맨몸 스쿼트를 10회씩 찍어 확인해 보세요.")
                 .build();
     }
 }

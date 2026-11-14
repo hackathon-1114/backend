@@ -90,8 +90,11 @@ class ApiSmokeTest {
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.code").value("AI503"));
 
+        // 예시 사용자에게는 시연용 패턴 3개가 미리 들어 있다
         mvc.perform(get("/api/insights").header("X-User-Id", "1"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(3));
+        mvc.perform(get("/api/insights").header("X-User-Id", "99"))
                 .andExpect(jsonPath("$.data.length()").value(0));
     }
 
@@ -140,6 +143,9 @@ class ApiSmokeTest {
                 .andExpect(jsonPath("$.data.length()").value(3))
                 .andExpect(jsonPath("$.data[0].stats.repCount").value(10))
                 .andExpect(jsonPath("$.data[0].stats.fadeFromRep").value(5))
+                .andExpect(jsonPath("$.data[0].feedback.headline").value("5회째부터 덜 앉고 느려졌습니다"))
+                .andExpect(jsonPath("$.data[0].feedback.exercises.length()").value(3))
+                .andExpect(jsonPath("$.data[1].feedback").doesNotExist())
                 .andExpect(jsonPath("$.data[1].stats.fadeFromRep").doesNotExist())
                 .andExpect(jsonPath("$.data[2].stats.fadeFromRep").value(6));
 
@@ -212,9 +218,13 @@ class ApiSmokeTest {
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.code").value("AI503"));
 
-        mvc.perform(get("/api/body-alerts/latest").header("X-User-Id", "1"))
+        mvc.perform(get("/api/body-alerts/latest").header("X-User-Id", "777"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("BODYALERT404"));
+        mvc.perform(get("/api/body-alerts/latest").header("X-User-Id", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.areas.length()").value(3))
+                .andExpect(jsonPath("$.data.areas[0].status").value("추가 확인 권장"));
     }
 
     @Test
