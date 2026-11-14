@@ -18,7 +18,9 @@ public record ExerciseSetResponse(
         Feedback feedback) {
 
     public record Feedback(
-            @Schema(description = "세트 총평 한두 문장")
+            @Schema(description = "화면 맨 위에 크게 쓸 한 문장 결론", example = "5회째부터 덜 앉기 시작했습니다")
+            String headline,
+            @Schema(description = "세트 총평. 두 문장 이내")
             String summary,
             List<Observation> observations,
             @Schema(description = "다음 세트에서 해볼 행동")
