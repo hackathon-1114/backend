@@ -1,4 +1,4 @@
-// MUSCLE MAP 두 화면(index.html, pose-test.html)이 함께 쓰는 도구.
+// MOTIF 두 화면(index.html, pose-test.html)이 함께 쓰는 도구.
 const MM = (() => {
   const $ = id => document.getElementById(id);
   const store = {
@@ -70,7 +70,7 @@ const MM = (() => {
   // 클수록 깊이 앉은 것이라 막대가 높을수록 잘 앉은 것으로 읽힌다.
   const sat = depth => Math.round((1 - depth) * 100);
 
-  const BLUE = '#2B6CF6', RED = '#E5484D', TRACK = '#EEF0F3', SUB = '#8B95A1', INK = '#191F28';
+  const BLUE = '#C6FF3A', RED = '#FF6B6B', TRACK = '#2A332B', SUB = '#7C877D', INK = '#F3F6F1', DOT = '#151B16';   // BLUE는 강조색(라임) 자리
 
   // 점들을 지나는 부드러운 곡선. 점 사이에서 값이 튀어 오르지 않는 방식(단조 3차 보간)이라 없는 봉우리를 만들지 않는다
   function smooth(pts) {
@@ -139,7 +139,7 @@ const MM = (() => {
     // 점은 반복이 적을 때만 전부 찍는다. 많으면 처음, 무너지기 시작한 곳, 마지막만
     const marked = i => n <= 16 || i === 0 || i === n - 1 || i + 1 === fadeFrom;
     pts.forEach((p, i) => {
-      if (marked(i)) chart.append(svg('circle', { cx: p[0], cy: p[1], r: 3.2, fill: '#FFFFFF', stroke: faded(i) ? RED : BLUE, 'stroke-width': 2 }));
+      if (marked(i)) chart.append(svg('circle', { cx: p[0], cy: p[1], r: 3.2, fill: DOT, stroke: faded(i) ? RED : BLUE, 'stroke-width': 2 }));
     });
     // 수치는 처음, 무너지기 시작한 곳, 마지막에만 붙인다
     [...new Set([0, fadeFrom ? fadeFrom - 1 : -1, n - 1])].filter(i => i >= 0 && i < n).forEach(i => {
@@ -165,7 +165,7 @@ const MM = (() => {
     const node = svg('svg', { viewBox: '0 0 76 76', class: 'ring', role: 'img' });
     node.setAttribute('aria-label', total + '회 중 ' + kept + '회가 처음 깊이를 지킴');
     node.append(svg('circle', { cx: 38, cy: 38, r, fill: 'none', stroke: TRACK, 'stroke-width': 8 }));
-    node.append(svg('circle', { cx: 38, cy: 38, r, fill: 'none', stroke: share >= 1 ? '#1FA971' : BLUE, 'stroke-width': 8, 'stroke-linecap': 'round',
+    node.append(svg('circle', { cx: 38, cy: 38, r, fill: 'none', stroke: share >= 1 ? BLUE : BLUE, 'stroke-width': 8, 'stroke-linecap': 'round',
       'stroke-dasharray': (c * share) + ' ' + c, transform: 'rotate(-90 38 38)' }));
     node.append(svg('text', { x: 38, y: 43, 'text-anchor': 'middle', 'font-size': 16, 'font-weight': 700, fill: INK }, kept + '/' + total));
     return node;

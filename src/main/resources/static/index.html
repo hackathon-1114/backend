@@ -2,21 +2,22 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<meta name="theme-color" content="#0D110E">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MUSCLE MAP</title>
+<title>MOTIF</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="stylesheet" href="/app.css?v=8">
+<link rel="stylesheet" href="/app.css?v=9">
 <style>
   .goals { list-style: none; padding: 0; margin: 10px 0 0; }
   .goals li { padding: 10px 0 10px 28px; border-top: 1px solid var(--rule); position: relative; font-size: 15px; }
-  .goals li::before { content: ''; position: absolute; left: 2px; top: 14px; width: 14px; height: 14px; border: 1.5px solid #B0B8C1; border-radius: 5px; }
+  .goals li::before { content: ''; position: absolute; left: 2px; top: 14px; width: 14px; height: 14px; border: 1.5px solid #5E685F; border-radius: 5px; }
   .goals li:first-child { border-top: 0; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top">
-    <span class="brand">MUSCLE MAP</span>
+    <span class="brand">MOTIF</span>
     <select id="user" aria-label="사용자">
       <option value="example">예시 사용자</option>
       <option value="new">새 사용자</option>
@@ -125,7 +126,7 @@
   <a href="#result" data-tab="result"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M5 15l4-4 3 3 6-7"/></svg>결과</a>
 </div></nav>
 
-<script src="/app.js?v=7"></script>
+<script src="/app.js?v=8"></script>
 <script>
 const { $, api, el, finding, repChart, when } = MM;
 
