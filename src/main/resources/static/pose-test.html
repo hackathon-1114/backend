@@ -62,15 +62,16 @@ const REP_END = 0.93;       // 93% 위로 돌아오면 한 번이 끝
 const REP_COUNTED = 0.80;   // 최저점이 80% 아래여야 횟수로 센다 (그 위는 "얕은 시도")
 const MIN_VISIBILITY = 0.5;
 const FRONT_VIEW_RATIO = 0.45;  // 어깨 너비 / 몸통 길이가 이보다 크면 정면으로 본다
-// 허리를 숙여 물건을 집는 동작은 엉덩이가 내려가도 스쿼트가 아니다. 상체가 크게 접히는지로 걸러낸다
+// 허리를 숙여 물건을 집는 동작은 엉덩이가 내려가도 스쿼트가 아니다. 측면에서는 상체가 크게 접히는지로 걸러낸다.
+// 공개 데이터 20명의 실제 스쿼트 100회에서 상체 기울기 최댓값은 50도였고, 숙이는 동작은 79~82도였다.
+// 정면에서는 걸러내지 않는다. 몸통이 짧아 보이는 정도로 구분하려 했더니 실제 스쿼트 80회 중 7회를 버렸다.
 const BEND_LEAN = 65;       // 측면: 상체가 65도 넘게 기울고
 const BEND_THIGH = 30;      //       허벅지는 수평보다 30도 넘게 서 있으면 숙이기
-const BEND_TORSO = 0.60;    // 정면: 몸통이 서 있을 때 길이의 60% 아래로 짧아 보이면 숙이기
 // 관찰 기준
 const SHALLOW_THIGH = 15;   // 측면: 최저점에서 허벅지가 수평보다 15도 넘게 위면 "깊이 부족"
 const LEAN_LIMIT = 50;      // 측면: 상체가 수직에서 50도 넘게 기울면 "상체 숙임 큼"
 const KNEE_IN_RATIO = 0.80; // 정면: 최저점 무릎 간격이 발목 간격의 80% 미만이면 "무릎 안쪽 모임"
-const SHIFT_LIMIT = 0.15;   // 정면: 골반 중심이 발 중심에서 발 간격의 15% 넘게 벗어나면 "좌우 쏠림"
+const SHIFT_LIMIT = 0.25;   // 정면: 골반 중심이 발 중심에서 발 간격의 25% 넘게 벗어나면 "좌우 쏠림". 카메라가 비스듬하면 오탐이 난다
 
 const $ = id => document.getElementById(id);
 const video = $('video');
@@ -192,7 +193,7 @@ function update(m, now) {
       minTorso: +t.minTorso.toFixed(3),
     };
     rep.findings = findings(rep);
-    const bend = front ? rep.minTorso < BEND_TORSO : (rep.maxLean > BEND_LEAN && rep.thighAngle > BEND_THIGH);
+    const bend = !front && rep.maxLean > BEND_LEAN && rep.thighAngle > BEND_THIGH;
     if (bend) ignored.push(rep);
     else if (t.min <= REP_COUNTED) addRep(rep);
     else { partials.push(rep); say('더 깊이 앉아 보세요'); }
