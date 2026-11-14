@@ -70,7 +70,7 @@ const MM = (() => {
   // 클수록 깊이 앉은 것이라 막대가 높을수록 잘 앉은 것으로 읽힌다.
   const sat = depth => Math.round((1 - depth) * 100);
 
-  const BLUE = '#1D5BBF', RED = '#D63A2F', TRACK = '#EEF1F0', SUB = '#5E6664';
+  const BLUE = '#2B6CF6', RED = '#E5484D', TRACK = '#EEF0F3', SUB = '#8B95A1', INK = '#191F28';
 
   // 점들을 지나는 부드러운 곡선. 점 사이에서 값이 튀어 오르지 않는 방식(단조 3차 보간)이라 없는 봉우리를 만들지 않는다
   function smooth(pts) {
@@ -113,19 +113,25 @@ const MM = (() => {
     const keep = svg('clipPath', { id: id + 'a' }); keep.append(svg('rect', { x: 0, y: 0, width: split, height }));
     const fade = svg('clipPath', { id: id + 'b' }); fade.append(svg('rect', { x: split, y: 0, width: width - split, height }));
     defs.append(keep, fade);
+    // 영역은 아래로 갈수록 옅어지게 칠한다
+    [[BLUE, 'c'], [RED, 'd']].forEach(([color, key]) => {
+      const wash = svg('linearGradient', { id: id + key, x1: 0, y1: 0, x2: 0, y2: 1 });
+      wash.append(svg('stop', { offset: '0', 'stop-color': color, 'stop-opacity': .22 }), svg('stop', { offset: '1', 'stop-color': color, 'stop-opacity': .02 }));
+      defs.append(wash);
+    });
     chart.append(defs);
 
     chart.append(svg('line', { x1: 0, y1: floor, x2: width, y2: floor, stroke: TRACK, 'stroke-width': 1.5 }));
     if (n >= 2) {
       const line = smooth(pts);
       const area = line + ' L' + pts[n - 1][0] + ',' + floor + ' L' + pts[0][0] + ',' + floor + ' Z';
-      [[BLUE, id + 'a'], [RED, id + 'b']].forEach(([color, clip]) => {
-        chart.append(svg('path', { d: area, fill: color, opacity: .13, 'clip-path': 'url(#' + clip + ')' }));
-        chart.append(svg('path', { d: line, fill: 'none', stroke: color, 'stroke-width': compact ? 2 : 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+      [[BLUE, id + 'a', id + 'c'], [RED, id + 'b', id + 'd']].forEach(([color, clip, wash]) => {
+        chart.append(svg('path', { d: area, fill: 'url(#' + wash + ')', 'clip-path': 'url(#' + clip + ')' }));
+        chart.append(svg('path', { d: line, fill: 'none', stroke: color, 'stroke-width': compact ? 1.8 : 2.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
           'clip-path': 'url(#' + clip + ')' }));
       });
       const base = y((values[0] + values[1]) / 2);
-      chart.append(svg('line', { x1: 0, y1: base, x2: width, y2: base, stroke: '#1C1F1E', 'stroke-width': 1, 'stroke-dasharray': '3 4', opacity: .4 }));
+      chart.append(svg('line', { x1: 0, y1: base, x2: width, y2: base, stroke: SUB, 'stroke-width': 1, 'stroke-dasharray': '2 4', opacity: .7 }));
     }
     if (compact) return chart;
 
@@ -133,20 +139,20 @@ const MM = (() => {
     // 점은 반복이 적을 때만 전부 찍는다. 많으면 처음, 무너지기 시작한 곳, 마지막만
     const marked = i => n <= 16 || i === 0 || i === n - 1 || i + 1 === fadeFrom;
     pts.forEach((p, i) => {
-      if (marked(i)) chart.append(svg('circle', { cx: p[0], cy: p[1], r: 4, fill: '#FFFFFF', stroke: faded(i) ? RED : BLUE, 'stroke-width': 2.5 }));
+      if (marked(i)) chart.append(svg('circle', { cx: p[0], cy: p[1], r: 3.2, fill: '#FFFFFF', stroke: faded(i) ? RED : BLUE, 'stroke-width': 2 }));
     });
     // 수치는 처음, 무너지기 시작한 곳, 마지막에만 붙인다
     [...new Set([0, fadeFrom ? fadeFrom - 1 : -1, n - 1])].filter(i => i >= 0 && i < n).forEach(i => {
       const anchor = i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle';
-      chart.append(svg('text', { x: pts[i][0] + (i === 0 ? -4 : i === n - 1 ? 4 : 0), y: pts[i][1] - 10, 'text-anchor': anchor, 'font-size': 13, 'font-weight': 800,
-        fill: faded(i) ? RED : '#1C1F1E' }, values[i] + '%'));
+      chart.append(svg('text', { x: pts[i][0] + (i === 0 ? -4 : i === n - 1 ? 4 : 0), y: pts[i][1] - 10, 'text-anchor': anchor, 'font-size': 12, 'font-weight': 700,
+        fill: faded(i) ? RED : INK }, values[i] + '%'));
     });
     // 가로축 숫자는 12회까지는 전부, 넘으면 5회 간격으로
     const every = n <= 12 ? 1 : n <= 30 ? 5 : 10;
     reps.forEach((_, i) => {
       if (i === 0 || i === n - 1 || (i + 1) % every === 0) {
         if (every > 1 && i === n - 1 && n % every !== 0 && n % every < every / 2) return;   // 끝 숫자가 앞 숫자와 붙으면 뺀다
-        chart.append(svg('text', { x: pts[i][0], y: height - 6, 'text-anchor': i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle', 'font-size': 12,
+        chart.append(svg('text', { x: pts[i][0], y: height - 6, 'text-anchor': i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle', 'font-size': 11,
           fill: faded(i) ? RED : SUB }, i + 1));
       }
     });
@@ -158,10 +164,10 @@ const MM = (() => {
     const r = 30, c = 2 * Math.PI * r, share = total ? kept / total : 0;
     const node = svg('svg', { viewBox: '0 0 76 76', class: 'ring', role: 'img' });
     node.setAttribute('aria-label', total + '회 중 ' + kept + '회가 처음 깊이를 지킴');
-    node.append(svg('circle', { cx: 38, cy: 38, r, fill: 'none', stroke: TRACK, 'stroke-width': 9 }));
-    node.append(svg('circle', { cx: 38, cy: 38, r, fill: 'none', stroke: share >= 1 ? '#2F8F5B' : BLUE, 'stroke-width': 9, 'stroke-linecap': 'round',
+    node.append(svg('circle', { cx: 38, cy: 38, r, fill: 'none', stroke: TRACK, 'stroke-width': 8 }));
+    node.append(svg('circle', { cx: 38, cy: 38, r, fill: 'none', stroke: share >= 1 ? '#1FA971' : BLUE, 'stroke-width': 8, 'stroke-linecap': 'round',
       'stroke-dasharray': (c * share) + ' ' + c, transform: 'rotate(-90 38 38)' }));
-    node.append(svg('text', { x: 38, y: 43, 'text-anchor': 'middle', 'font-size': 17, 'font-weight': 800, fill: '#1C1F1E' }, kept + '/' + total));
+    node.append(svg('text', { x: 38, y: 43, 'text-anchor': 'middle', 'font-size': 16, 'font-weight': 700, fill: INK }, kept + '/' + total));
     return node;
   }
 

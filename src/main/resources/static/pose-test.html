@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MUSCLE MAP 측정</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="stylesheet" href="/app.css?v=7">
+<link rel="stylesheet" href="/app.css?v=8">
 <style>
   .voice { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; color: var(--sub); }
   .how { margin: 10px 0 0; padding-left: 18px; font-size: 14px; }
@@ -69,13 +69,13 @@
 </div>
 
 <nav class="tabs" aria-label="화면 이동"><div>
-  <a href="/#home">홈</a>
-  <a href="/#body">내 몸</a>
-  <a href="/pose-test.html" class="on">측정</a>
-  <a href="/#result">결과</a>
+  <a href="/#home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>홈</a>
+  <a href="/#body"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.5" r="3.3"/><path d="M5.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/></svg>내 몸</a>
+  <a href="/pose-test.html" class="on"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="12" height="10" rx="2.5"/><path d="M15 11l5-3v8l-5-3z"/></svg>측정</a>
+  <a href="/#result"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M5 15l4-4 3 3 6-7"/></svg>결과</a>
 </div></nav>
 
-<script src="/app.js?v=6"></script>
+<script src="/app.js?v=7"></script>
 <script type="module">
 import { PoseLandmarker, FilesetResolver, DrawingUtils }
   from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs';

@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MUSCLE MAP</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="stylesheet" href="/app.css?v=7">
+<link rel="stylesheet" href="/app.css?v=8">
 <style>
   .goals { list-style: none; padding: 0; margin: 10px 0 0; }
   .goals li { padding: 10px 0 10px 28px; border-top: 1px solid var(--rule); position: relative; font-size: 15px; }
-  .goals li::before { content: ''; position: absolute; left: 2px; top: 14px; width: 14px; height: 14px; border: 1.5px solid var(--ink); border-radius: 3px; }
+  .goals li::before { content: ''; position: absolute; left: 2px; top: 14px; width: 14px; height: 14px; border: 1.5px solid #B0B8C1; border-radius: 5px; }
   .goals li:first-child { border-top: 0; }
 </style>
 </head>
@@ -35,12 +35,12 @@
       <a class="btn" href="/pose-test.html">새 세트 측정하기</a>
     </div>
     <div class="sheet" id="homeHistory" hidden>
-      <h2>최근 세트를 나란히 보면</h2>
+      <h2>최근 세트 비교</h2>
       <p class="sub">선이 내려갈수록 덜 앉은 것입니다.</p>
       <div class="multiples" id="multiples"></div>
     </div>
     <div class="sheet">
-      <h2>기록에서 찾은 패턴</h2>
+      <h2>패턴 분석</h2>
       <div id="insights"></div>
       <button class="btn quiet" id="analyze" type="button">패턴 다시 찾기</button>
       <div class="msg" id="patternMsg"></div>
@@ -50,14 +50,14 @@
   <!-- 내 몸: 인바디, 문진, 확인할 영역 -->
   <div class="screen" id="body">
     <div class="sheet">
-      <h1>몸의 구성</h1>
+      <h1>인바디</h1>
       <p class="sub">인바디는 근육이 어디에 얼마나 있는지를 알려 줍니다. 자세는 카메라로 따로 봅니다.</p>
       <div id="inbodyView"></div>
       <button class="btn quiet" id="sampleInbody" type="button">가상 인바디 데이터 넣기</button>
       <div class="msg" id="inbodyMsg"></div>
     </div>
     <div class="sheet">
-      <h1>평소 몸을 쓰는 습관</h1>
+      <h1>생활 습관</h1>
       <h3>하루에 앉아 있는 시간</h3>
       <div class="chips" id="sitting" data-single>
         <button type="button">2시간 미만</button><button type="button">2~4시간</button>
@@ -84,7 +84,7 @@
       <div class="msg" id="surveyMsg"></div>
     </div>
     <div class="sheet" id="alertSheet">
-      <h1>카메라로 확인하면 좋을 영역</h1>
+      <h1>확인할 영역</h1>
       <p class="sub">인바디와 습관을 함께 본 사전 분석입니다. 아직 움직임을 재지 않았으므로 결론이 아니라 확인할 항목입니다.</p>
       <div id="alertView"></div>
       <div class="msg" id="alertMsg"></div>
@@ -102,16 +102,16 @@
       <p class="note" id="resultNote"></p>
     </div>
     <div class="sheet" id="analysisSheet" hidden>
-      <h2>이번 세트에서 보인 것</h2>
+      <h2>세트 분석</h2>
       <div id="observations"></div>
       <div class="msg" id="resultMsg"></div>
     </div>
     <div class="sheet" id="exerciseSheet" hidden>
-      <h2>이렇게 보완해 보세요</h2>
+      <h2>보완 운동</h2>
       <div id="exercises"></div>
     </div>
     <div class="sheet" id="goalSheet" hidden>
-      <h2>다음 측정에서 확인할 것</h2>
+      <h2>다음 측정 목표</h2>
       <ul class="goals" id="goals"></ul>
       <a class="btn" href="/pose-test.html">다시 측정하기</a>
     </div>
@@ -119,13 +119,13 @@
 </div>
 
 <nav class="tabs" aria-label="화면 이동"><div>
-  <a href="#home" data-tab="home">홈</a>
-  <a href="#body" data-tab="body">내 몸</a>
-  <a href="/pose-test.html">측정</a>
-  <a href="#result" data-tab="result">결과</a>
+  <a href="#home" data-tab="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>홈</a>
+  <a href="#body" data-tab="body"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.5" r="3.3"/><path d="M5.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/></svg>내 몸</a>
+  <a href="/pose-test.html"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="12" height="10" rx="2.5"/><path d="M15 11l5-3v8l-5-3z"/></svg>측정</a>
+  <a href="#result" data-tab="result"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M5 15l4-4 3 3 6-7"/></svg>결과</a>
 </div></nav>
 
-<script src="/app.js?v=6"></script>
+<script src="/app.js?v=7"></script>
 <script>
 const { $, api, el, finding, repChart, when } = MM;
 
