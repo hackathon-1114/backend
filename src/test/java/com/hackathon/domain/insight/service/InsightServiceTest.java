@@ -10,6 +10,8 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hackathon.domain.ai.AiDto;
 import com.hackathon.domain.ai.AiService;
+import com.hackathon.domain.formcheck.entity.FormCheck;
+import com.hackathon.domain.formcheck.repository.FormCheckRepository;
 import com.hackathon.domain.insight.dto.InsightResponse;
 import com.hackathon.domain.insight.entity.Insight;
 import com.hackathon.domain.insight.repository.InsightRepository;
@@ -26,17 +28,24 @@ class InsightServiceTest {
 
     private final WorkoutRepository workoutRepository = mock(WorkoutRepository.class);
     private final InsightRepository insightRepository = mock(InsightRepository.class);
+    private final FormCheckRepository formCheckRepository = mock(FormCheckRepository.class);
     private final AiService aiService = mock(AiService.class);
-    private final InsightService service = new InsightService(workoutRepository, insightRepository, aiService);
+    private final InsightService service = new InsightService(workoutRepository, insightRepository, formCheckRepository, aiService);
 
     @Test
     void describeAddsWeekdayAndGapSoTheModelDoesNotHaveToCompute() {
         String text = InsightService.describe(List.of(
                 workout(LocalDateTime.of(2026, 11, 8, 8, 0), 13.0, "최장 거리"),
-                workout(LocalDateTime.of(2026, 11, 12, 19, 50), 4.0, null)));
+                workout(LocalDateTime.of(2026, 11, 12, 19, 50), 4.0, null)),
+                List.of(FormCheck.builder().userId(1L).exercise("스쿼트").performedAt(LocalDateTime.of(2026, 11, 4, 22, 0))
+                                .score(58).issueLabels("무릎 안쪽 모임, 깊이 부족").build(),
+                        FormCheck.builder().userId(1L).exercise("러닝").performedAt(LocalDateTime.of(2026, 10, 31, 7, 0))
+                                .score(86).issueLabels("").build()));
 
         assertThat(text).contains("2026-11-08(일) 08:00 | 러닝 | 40분 | 13.0km | 강도 3/5 | 기분 4/5 | 메모: 최장 거리");
         assertThat(text).contains("2026-11-12(목) 19:50 | 러닝 | 40분 | 4.0km | 강도 3/5 | 기분 4/5 | 직전 기록 후 4일\n");
+        assertThat(text).contains("2026-11-04(수) 22:00 | 스쿼트 | 자세 점수 58/100 | 지적: 무릎 안쪽 모임, 깊이 부족\n");
+        assertThat(text).contains("2026-10-31(토) 07:00 | 러닝 | 자세 점수 86/100 | 지적: 없음\n");
     }
 
     @Test

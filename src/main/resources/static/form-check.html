@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>자세 점검 테스트</title>
+<style>
+  body { font-family: -apple-system, "Apple SD Gothic Neo", sans-serif; max-width: 720px; margin: 24px auto; padding: 0 16px; color: #111; }
+  h1 { font-size: 20px; }
+  label { display: block; margin: 12px 0 4px; font-size: 14px; color: #444; }
+  input, select, button { font-size: 16px; padding: 8px; }
+  button { margin-top: 16px; cursor: pointer; }
+  #frames { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 16px; }
+  #frames img { height: 96px; border: 1px solid #ccc; }
+  #status { margin-top: 16px; color: #555; }
+  .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-top: 12px; }
+  .score { font-size: 32px; font-weight: 700; }
+  .muted { color: #666; font-size: 14px; }
+</style>
+</head>
+<body>
+<h1>자세 점검 테스트 페이지</h1>
+<p class="muted">백엔드 확인용입니다. 영상에서 장면을 뽑아 <code>POST /api/form-checks</code>로 보냅니다. 프론트는 아래 <code>extractFrames</code>를 그대로 가져다 쓰면 됩니다.</p>
+
+<label for="video">운동 영상 (5~15초, 전신이 보이게)</label>
+<input id="video" type="file" accept="video/*">
+
+<label for="exercise">운동 종목</label>
+<select id="exercise">
+  <option>스쿼트</option><option>러닝</option><option>데드리프트</option><option>푸시업</option><option>런지</option>
+</select>
+
+<label for="memo">특히 봐 줬으면 하는 점 (선택)</label>
+<input id="memo" type="text" maxlength="300" style="width: 100%; box-sizing: border-box">
+
+<button id="run" type="button">자세 점검</button>
+<div id="status"></div>
+<div id="frames"></div>
+<div id="result"></div>
+
+<script>
+// 영상 파일에서 시간 간격이 같은 장면 count장을 JPEG로 뽑는다. 긴 변은 maxSide 픽셀로 줄인다.
+async function extractFrames(file, count = 8, maxSide = 768) {
+  const video = document.createElement('video');
+  video.muted = true;
+  video.playsInline = true;
+  video.preload = 'auto';
+  video.src = URL.createObjectURL(file);
+  await new Promise((resolve, reject) => {
+    video.onloadeddata = resolve;
+    video.onerror = () => reject(new Error('이 브라우저에서 읽을 수 없는 영상입니다'));
+  });
+  const scale = Math.min(1, maxSide / Math.max(video.videoWidth, video.videoHeight));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(video.videoWidth * scale);
+  canvas.height = Math.round(video.videoHeight * scale);
+  const ctx = canvas.getContext('2d');
+  const frames = [];
+  for (let i = 0; i < count; i++) {
+    const seeked = new Promise(resolve => { video.onseeked = resolve; });
+    video.currentTime = video.duration * (i + 0.5) / count;
+    await seeked;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    frames.push({ mediaType: 'image/jpeg', data: canvas.toDataURL('image/jpeg', 0.8) });
+  }
+  URL.revokeObjectURL(video.src);
+  return frames;
+}
+
+const $ = id => document.getElementById(id);
+
+function el(tag, text, className) {
+  const node = document.createElement(tag);
+  if (text != null) node.textContent = text;
+  if (className) node.className = className;
+  return node;
+}
+
+function render(data) {
+  const box = $('result');
+  box.replaceChildren();
+  const head = el('div', null, 'card');
+  head.append(el('div', data.score + '점', 'score'), el('div', data.summary));
+  box.append(head);
+  if (data.goodPoints.length) {
+    const good = el('div', null, 'card');
+    good.append(el('strong', '잘한 점'));
+    data.goodPoints.forEach(g => good.append(el('div', '· ' + g)));
+    box.append(good);
+  }
+  if (!data.issues.length) box.append(el('div', '지적할 문제가 보이지 않았습니다.', 'card'));
+  data.issues.forEach(issue => {
+    const card = el('div', null, 'card');
+    card.append(
+      el('strong', issue.label + ' (' + issue.bodyPart + ', ' + issue.severity + ')'),
+      el('div', issue.observation, 'muted'),
+      el('div', '→ ' + issue.cue));
+    box.append(card);
+  });
+}
+
+$('run').addEventListener('click', async () => {
+  const file = $('video').files[0];
+  if (!file) { $('status').textContent = '영상을 먼저 고르세요.'; return; }
+  $('run').disabled = true;
+  $('result').replaceChildren();
+  try {
+    $('status').textContent = '장면을 뽑는 중...';
+    const frames = await extractFrames(file);
+    $('frames').replaceChildren(...frames.map(f => { const img = new Image(); img.src = f.data; return img; }));
+    $('status').textContent = 'AI가 보는 중... (10~20초)';
+    const res = await fetch('/api/form-checks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': '1' },
+      body: JSON.stringify({ exercise: $('exercise').value, frames, memo: $('memo').value || null }),
+    });
+    const body = await res.json();
+    if (!res.ok) { $('status').textContent = body.code + ' ' + body.message; return; }
+    $('status').textContent = '';
+    render(body.data);
+  } catch (e) {
+    $('status').textContent = '실패: ' + e.message;
+  } finally {
+    $('run').disabled = false;
+  }
+});
+</script>
+</body>
+</html>

@@ -1,5 +1,7 @@
 package com.hackathon.global.config;
 
+import com.hackathon.domain.formcheck.entity.FormCheck;
+import com.hackathon.domain.formcheck.repository.FormCheckRepository;
 import com.hackathon.domain.sample.entity.Sample;
 import com.hackathon.domain.sample.repository.SampleRepository;
 import com.hackathon.domain.workout.entity.Workout;
@@ -22,6 +24,7 @@ public class SeedData implements ApplicationRunner {
 
     private final SampleRepository sampleRepository;
     private final WorkoutRepository workoutRepository;
+    private final FormCheckRepository formCheckRepository;
 
     @Override
     @Transactional
@@ -32,8 +35,13 @@ public class SeedData implements ApplicationRunner {
                     Sample.builder().title("복약 체크").content("고혈압약 08:00 복용 완료").userId(1L).build(),
                     Sample.builder().title("수면 기록").content("6시간 30분, 중간에 2번 깸").userId(2L).build()));
         }
+        LocalDate lastSunday = LocalDate.now(ZoneId.of("Asia/Seoul"))
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
         if (workoutRepository.count() == 0) {
-            workoutRepository.saveAll(demoWorkouts());
+            workoutRepository.saveAll(demoWorkouts(lastSunday));
+        }
+        if (formCheckRepository.count() == 0) {
+            formCheckRepository.saveAll(demoFormChecks(lastSunday));
         }
     }
 
@@ -44,9 +52,7 @@ public class SeedData implements ApplicationRunner {
      * - 야근한 날 억지로 간 헬스 뒤에는 나흘 공백이 생긴다
      * 요일 패턴이 재시작해도 유지되도록, 날짜는 가장 최근 일요일을 기준으로 계산한다.
      */
-    private List<Workout> demoWorkouts() {
-        LocalDate lastSunday = LocalDate.now(ZoneId.of("Asia/Seoul"))
-                .with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
+    private List<Workout> demoWorkouts(LocalDate lastSunday) {
         return List.of(
                 // 5주 전
                 running(lastSunday,4, DayOfWeek.TUESDAY, 19, 30, 35, 5.0, 3, 3, "퇴근 후 한강"),
@@ -82,17 +88,64 @@ public class SeedData implements ApplicationRunner {
 
     private static Workout workout(String type, LocalDate lastSunday, int weeksAgo, DayOfWeek day, int hour,
                                    int minute, int minutes, Double km, int intensity, int mood, String memo) {
-        // lastSunday가 그 주의 마지막 날이 되도록 월요일~일요일을 한 주로 센다
-        LocalDate date = lastSunday.minusWeeks(weeksAgo).minusDays(DayOfWeek.SUNDAY.getValue() - day.getValue());
         return Workout.builder()
                 .userId(1L)
                 .type(type)
-                .performedAt(date.atTime(hour, minute))
+                .performedAt(dateOf(lastSunday, weeksAgo, day).atTime(hour, minute))
                 .durationMinutes(minutes)
                 .distanceKm(km)
                 .intensity(intensity)
                 .mood(mood)
                 .memo(memo)
+                .build();
+    }
+
+    /** lastSunday가 그 주의 마지막 날이 되도록 월요일~일요일을 한 주로 센다 */
+    private static LocalDate dateOf(LocalDate lastSunday, int weeksAgo, DayOfWeek day) {
+        return lastSunday.minusWeeks(weeksAgo).minusDays(DayOfWeek.SUNDAY.getValue() - day.getValue());
+    }
+
+    /**
+     * 유저 1의 자세 점검 기록. 위 운동 기록과 같은 날짜에 맞췄다.
+     * 심어 둔 패턴: 야근한 날 늦은 저녁 세션은 점수가 낮고 같은 지적이 반복되고, 주말 아침 세션은 지적이 없다.
+     */
+    private List<FormCheck> demoFormChecks(LocalDate lastSunday) {
+        String kneeIn = """
+                {"label":"무릎 안쪽 모임","bodyPart":"무릎","observation":"일어서는 장면에서 양 무릎이 발끝보다 안쪽으로 들어옵니다",\
+                "cue":"무릎을 새끼발가락 쪽으로 밀면서 일어나세요","severity":"보통"}""";
+        String shallow = """
+                {"label":"깊이 부족","bodyPart":"고관절","observation":"가장 낮은 장면에서도 엉덩이가 무릎보다 높습니다",\
+                "cue":"의자에 앉듯 엉덩이를 뒤로 빼며 조금 더 내려가세요","severity":"낮음"}""";
+        String lean = """
+                {"label":"상체 숙임","bodyPart":"상체","observation":"후반 장면으로 갈수록 상체가 앞으로 기웁니다",\
+                "cue":"시선을 15m 앞에 두고 가슴을 펴세요","severity":"낮음"}""";
+        return List.of(
+                formCheck(lastSunday, 4, DayOfWeek.SATURDAY, 7, 10, "러닝", 84,
+                        "착지와 상체 정렬이 안정적입니다.", "[\"상체가 곧게 서 있습니다\",\"팔 흔들기가 일정합니다\"]", "[]", ""),
+                formCheck(lastSunday, 3, DayOfWeek.FRIDAY, 20, 10, "러닝", 66,
+                        "후반으로 갈수록 상체가 앞으로 기웁니다.", "[\"보폭이 일정합니다\"]", "[" + lean + "]", "상체 숙임"),
+                formCheck(lastSunday, 2, DayOfWeek.WEDNESDAY, 21, 40, "스쿼트", 61,
+                        "일어설 때 무릎이 안으로 모이고 깊이가 얕습니다.", "[\"발 간격이 적절합니다\"]",
+                        "[" + kneeIn + "," + shallow + "]", "무릎 안쪽 모임, 깊이 부족"),
+                formCheck(lastSunday, 1, DayOfWeek.SATURDAY, 7, 0, "러닝", 86,
+                        "전반적으로 안정적인 자세입니다.", "[\"착지가 몸 아래에서 이뤄집니다\"]", "[]", ""),
+                formCheck(lastSunday, 0, DayOfWeek.WEDNESDAY, 22, 0, "스쿼트", 58,
+                        "지난번과 같은 무릎 모임이 다시 보입니다.", "[\"허리는 중립을 유지합니다\"]",
+                        "[" + kneeIn + "," + shallow + "]", "무릎 안쪽 모임, 깊이 부족"));
+    }
+
+    private static FormCheck formCheck(LocalDate lastSunday, int weeksAgo, DayOfWeek day, int hour, int minute,
+                                       String exercise, int score, String summary, String goodPointsJson,
+                                       String issuesJson, String issueLabels) {
+        return FormCheck.builder()
+                .userId(1L)
+                .exercise(exercise)
+                .performedAt(dateOf(lastSunday, weeksAgo, day).atTime(hour, minute))
+                .score(score)
+                .summary(summary)
+                .goodPointsJson(goodPointsJson)
+                .issuesJson(issuesJson)
+                .issueLabels(issueLabels)
                 .build();
     }
 }

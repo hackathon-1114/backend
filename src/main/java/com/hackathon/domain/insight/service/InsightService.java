@@ -3,6 +3,8 @@ package com.hackathon.domain.insight.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.hackathon.domain.ai.AiDto;
 import com.hackathon.domain.ai.AiService;
+import com.hackathon.domain.formcheck.entity.FormCheck;
+import com.hackathon.domain.formcheck.repository.FormCheckRepository;
 import com.hackathon.domain.insight.dto.InsightResponse;
 import com.hackathon.domain.insight.entity.Insight;
 import com.hackathon.domain.insight.repository.InsightRepository;
@@ -28,11 +30,13 @@ public class InsightService {
     static final int MIN_RECORDS = 5;
     /** 프롬프트 길이를 묶어 두기 위한 상한. 최근 기록부터 센다 */
     static final int MAX_RECORDS = 200;
+    static final int MAX_FORM_CHECKS = 50;
 
     private static final String SYSTEM = """
             너는 운동 기록에서 본인도 몰랐던 행동 패턴을 찾아 주는 분석가다.
             아래 기록만 근거로, 사용자가 스스로 알아차리기 어려운 패턴을 3개 찾아라.
             - 총 횟수나 평균 같은 단순 요약은 패턴이 아니다. 요일, 시간대, 기록 사이 간격, 강도, 기분, 메모 사이의 관계를 봐라.
+            - 자세 점검 기록이 있으면 자세 점수와 반복되는 지적이 운동 시각, 강도, 메모와 어떻게 이어지는지도 본다.
             - title은 사용자에게 건네는 한 문장으로 쓴다.
             - evidence에는 기록에 실제로 있는 날짜와 수치를 넣는다. 기록에 없는 사실은 지어내지 않는다.
             - suggestion은 이번 주에 바로 해볼 수 있는 행동 한 가지다.
@@ -52,6 +56,7 @@ public class InsightService {
 
     private final WorkoutRepository workoutRepository;
     private final InsightRepository insightRepository;
+    private final FormCheckRepository formCheckRepository;
     private final AiService aiService;
 
     /**
@@ -64,9 +69,11 @@ public class InsightService {
             throw new BusinessException(ErrorCode.INSIGHT_NOT_ENOUGH_DATA);
         }
         List<Workout> oldestFirst = recent.subList(0, Math.min(recent.size(), MAX_RECORDS)).reversed();
+        List<FormCheck> checks = formCheckRepository.findByUserIdOrderByPerformedAtDesc(userId);
+        List<FormCheck> checksOldestFirst = checks.subList(0, Math.min(checks.size(), MAX_FORM_CHECKS)).reversed();
 
         JsonNode result = aiService.json(
-                new AiDto.JsonRequest(SYSTEM, describe(oldestFirst), null, null, null, SCHEMA));
+                new AiDto.JsonRequest(SYSTEM, describe(oldestFirst, checksOldestFirst), null, null, null, SCHEMA));
 
         List<Insight> found = new ArrayList<>();
         for (JsonNode p : result.path("patterns")) {
@@ -94,7 +101,7 @@ public class InsightService {
     /**
      * 기록을 한 줄씩 글로 푼다. 요일과 직전 기록 후 간격은 모델이 계산하다 틀리기 쉬워 서버가 미리 계산해 넣는다.
      */
-    static String describe(List<Workout> oldestFirst) {
+    static String describe(List<Workout> oldestFirst, List<FormCheck> checksOldestFirst) {
         StringBuilder sb = new StringBuilder("운동 기록 (오래된 순)\n");
         Workout prev = null;
         for (Workout w : oldestFirst) {
@@ -113,6 +120,19 @@ public class InsightService {
             if (w.getMemo() != null && !w.getMemo().isBlank()) sb.append(" | 메모: ").append(w.getMemo());
             sb.append('\n');
             prev = w;
+        }
+        if (!checksOldestFirst.isEmpty()) {
+            sb.append("\n자세 점검 기록 (오래된 순, 운동 영상을 AI가 본 결과)\n");
+            for (FormCheck c : checksOldestFirst) {
+                sb.append(c.getPerformedAt().format(DATE))
+                        .append('(').append(c.getPerformedAt().getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN))
+                        .append(") ").append(c.getPerformedAt().format(TIME))
+                        .append(" | ").append(c.getExercise())
+                        .append(" | 자세 점수 ").append(c.getScore()).append("/100")
+                        .append(" | 지적: ").append(c.getIssueLabels() == null || c.getIssueLabels().isBlank()
+                                ? "없음" : c.getIssueLabels())
+                        .append('\n');
+            }
         }
         return sb.toString();
     }

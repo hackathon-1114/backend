@@ -96,6 +96,34 @@ class ApiSmokeTest {
     }
 
     @Test
+    void formChecksSeedValidationAndAiKey() throws Exception {
+        mvc.perform(get("/api/form-checks").header("X-User-Id", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(5))
+                .andExpect(jsonPath("$.data[0].exercise").value("스쿼트"))
+                .andExpect(jsonPath("$.data[0].score").value(58))
+                .andExpect(jsonPath("$.data[0].issues[0].label").value("무릎 안쪽 모임"))
+                .andExpect(jsonPath("$.data[0].goodPoints[0]").value("허리는 중립을 유지합니다"));
+
+        mvc.perform(post("/api/form-checks").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"exercise\":\"스쿼트\",\"frames\":[]}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.data.frames").exists());
+
+        // 장면이 유효하면 AI 호출까지 간다. 테스트에는 키가 없으므로 503
+        mvc.perform(post("/api/form-checks").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"exercise\":\"스쿼트\",\"frames\":[{\"mediaType\":\"image/jpeg\",\"data\":\"AAAA\"}]}"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("AI503"));
+
+        mvc.perform(get("/api/form-checks/9999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("FORMCHECK404"));
+
+        mvc.perform(get("/form-check.html")).andExpect(status().isOk());
+    }
+
+    @Test
     void aiWithoutKeyReturns503() throws Exception {
         mvc.perform(post("/api/ai/chat").contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"hi\"}"))
                 .andExpect(status().isServiceUnavailable())
