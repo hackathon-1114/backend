@@ -34,8 +34,8 @@ public class ExerciseSetRequest {
     }
 
     public record Rep(
-            @Schema(description = "촬영 방향", example = "side")
-            @Pattern(regexp = "side|front") String view,
+            @Schema(description = "촬영 방향. side / front / diagonal(비스듬해서 자세 관찰을 내지 않은 반복)", example = "side")
+            @Pattern(regexp = "side|front|diagonal") String view,
             @Schema(description = "최저점의 엉덩이 높이 비율. 서 있을 때 1, 낮을수록 깊이 앉은 것", example = "0.52")
             @NotNull @DecimalMin("0.0") @DecimalMax("1.2") Double depth,
             @Schema(description = "한 번에 걸린 시간(ms)", example = "2300")

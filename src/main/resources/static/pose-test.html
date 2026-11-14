@@ -69,7 +69,12 @@ const REP_START = 0.90;     // 엉덩이가 서 있을 때의 90% 아래로 내�
 const REP_END = 0.93;       // 93% 위로 돌아오면 한 번이 끝
 const REP_COUNTED = 0.80;   // 최저점이 80% 아래여야 횟수로 센다 (그 위는 "얕은 시도")
 const MIN_VISIBILITY = 0.5;
-const FRONT_VIEW_RATIO = 0.45;  // 어깨 너비 / 몸통 길이가 이보다 크면 정면으로 본다
+// 촬영 방향. 공개 데이터 20명에서 어깨 너비 / 몸통 길이는 정면 0.49~1.15, 측면 0.00~0.25였다.
+// 그 사이거나 어깨가 앞뒤로 틀어져 있으면 "비스듬"으로 보고 횟수만 세고 자세 관찰은 내지 않는다.
+// 비스듬한 영상에서 좌우 쏠림 오탐이 났기 때문이다.
+const FRONT_VIEW_RATIO = 0.45;
+const SIDE_VIEW_RATIO = 0.30;
+const FRONT_MAX_ROTATION = 1.0; // 양 어깨의 깊이 차 / 어깨 너비. 정면 데이터의 95%가 0.74 아래였다
 // 허리를 숙여 물건을 집는 동작은 엉덩이가 내려가도 스쿼트가 아니다. 측면에서는 상체가 크게 접히는지로 걸러낸다.
 // 공개 데이터 20명의 실제 스쿼트 100회에서 상체 기울기 최댓값은 50도였고, 숙이는 동작은 79~82도였다.
 // 정면에서는 걸러내지 않는다. 몸통이 짧아 보이는 정도로 구분하려 했더니 실제 스쿼트 80회 중 7회를 버렸다.
@@ -116,12 +121,17 @@ function measure(lm) {
   const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
   const hip = mid(L.hip, R.hip), ankle = mid(L.ankle, R.ankle), shoulder = mid(L.shoulder, R.shoulder);
   const torso = Math.hypot(shoulder.x - hip.x, shoulder.y - hip.y) || 1;
-  const front = Math.abs(L.shoulder.x - R.shoulder.x) / torso > FRONT_VIEW_RATIO;
+  const shoulderWidth = Math.abs(L.shoulder.x - R.shoulder.x);
+  const widthRatio = shoulderWidth / torso;
+  const rotation = Math.abs(lm[11].z - lm[12].z) / (Math.abs(lm[11].x - lm[12].x) || 1e-6);
+  const view = widthRatio > FRONT_VIEW_RATIO && rotation < FRONT_MAX_ROTATION ? 'front'
+    : widthRatio < SIDE_VIEW_RATIO ? 'side' : 'diagonal';
+  const front = view === 'front';
   const near = vis(L) >= vis(R) ? L : R;   // 측면에서는 카메라 쪽 다리를 쓴다
 
   const deg = r => r * 180 / Math.PI;
   const out = {
-    front,
+    view,
     legHeight: ankle.y - hip.y,                                   // 엉덩이가 발목보다 얼마나 위에 있나
     torso,
     lean: deg(Math.atan2(Math.abs(shoulder.x - hip.x), Math.abs(hip.y - shoulder.y))),
@@ -141,7 +151,7 @@ function findings(rep) {
   if (rep.view === 'side') {
     if (rep.thighAngle > SHALLOW_THIGH) f.push('깊이 부족');
     if (rep.maxLean > LEAN_LIMIT) f.push('상체 숙임 큼');
-  } else {
+  } else if (rep.view === 'front') {
     if (rep.kneeRatio != null && rep.kneeRatio < KNEE_IN_RATIO) f.push('무릎 안쪽 모임');
     if (rep.shift != null && Math.abs(rep.shift) > SHIFT_LIMIT) f.push(rep.shift > 0 ? '화면 오른쪽으로 쏠림' : '화면 왼쪽으로 쏠림');
   }
@@ -164,17 +174,25 @@ function say(text) {
   speechSynthesis.speak(u);
 }
 
+const VIEW_NAMES = { side: '측면', front: '정면', diagonal: '비스듬' };
+let diagonalHintGiven = false;
+
 function addRep(rep) {
   reps.push(rep);
   $('count').textContent = reps.length;
   const tr = document.createElement('tr');
-  [reps.length, rep.view === 'side' ? '측면' : '정면', Math.round(rep.depth * 100) + '%',
+  [reps.length, VIEW_NAMES[rep.view], Math.round(rep.depth * 100) + '%',
     (rep.durationMs / 1000).toFixed(1) + '초', Math.round(rep.maxLean) + '°',
     rep.kneeRatio == null ? '-' : rep.kneeRatio.toFixed(2), rep.findings.join(', ') || '없음']
     .forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.append(td); });
   $('reps').append(tr);
   const cue = rep.findings.map(f => CUES[f]).find(Boolean);
-  say(cue ? reps.length + '. ' + cue : String(reps.length));
+  if (rep.view === 'diagonal' && !diagonalHintGiven) {
+    diagonalHintGiven = true;
+    say(reps.length + '. 카메라를 정면이나 옆에 두면 자세도 봐 드립니다');
+  } else {
+    say(cue ? reps.length + '. ' + cue : String(reps.length));
+  }
 }
 
 function update(m, now) {
@@ -188,21 +206,23 @@ function update(m, now) {
     if (t.smooth < REP_START) { t.phase = 'moving'; t.min = t.smooth; t.bottom = m; t.maxLean = m.lean; t.minTorso = torsoRatio; t.start = now; t.views = []; }
     return t.smooth;
   }
-  t.views.push(m.front);
+  t.views.push(m.view);
   t.maxLean = Math.max(t.maxLean, m.lean);
   t.minTorso = Math.min(t.minTorso, torsoRatio);
   if (t.smooth < t.min) { t.min = t.smooth; t.bottom = m; }
   if (t.smooth > REP_END) {
-    const front = t.views.filter(Boolean).length > t.views.length / 2;
+    const count = v => t.views.filter(x => x === v).length;
+    const view = count('front') * 2 > t.views.length ? 'front' : count('side') * 2 > t.views.length ? 'side' : 'diagonal';
+    const front = view === 'front';
     const rep = {
-      view: front ? 'front' : 'side', depth: +t.min.toFixed(3), durationMs: Math.round(now - t.start),
+      view, depth: +t.min.toFixed(3), durationMs: Math.round(now - t.start),
       maxLean: +t.maxLean.toFixed(1), thighAngle: +t.bottom.thigh.toFixed(1),
       kneeRatio: t.bottom.kneeRatio == null ? null : +t.bottom.kneeRatio.toFixed(3),
       shift: t.bottom.shift == null ? null : +t.bottom.shift.toFixed(3),
       minTorso: +t.minTorso.toFixed(3),
     };
     rep.findings = findings(rep);
-    const bend = !front && rep.maxLean > BEND_LEAN && rep.thighAngle > BEND_THIGH;
+    const bend = view === 'side' && rep.maxLean > BEND_LEAN && rep.thighAngle > BEND_THIGH;
     if (bend) ignored.push(rep);
     else if (t.min <= REP_COUNTED) addRep(rep);
     else { partials.push(rep); say('더 깊이 앉아 보세요'); }
@@ -238,7 +258,7 @@ function frame() {
         // 영상 파일은 영상 시각을, 카메라는 실제 시각을 쓴다. 빨리 감기로 시험해도 반복 시간이 맞게 나온다
         ratio = update(m, video.srcObject ? now : video.currentTime * 1000);
         const avg = times.reduce((s, v) => s + v, 0) / times.length;
-        $('live').textContent = (m.front ? '정면' : '측면') + ' · 엉덩이 높이 ' + Math.round(ratio * 100)
+        $('live').textContent = VIEW_NAMES[m.view] + ' · 엉덩이 높이 ' + Math.round(ratio * 100)
           + '% · 상체 기울기 ' + Math.round(m.lean) + '° · 추론 ' + avg.toFixed(1) + 'ms';
       }
     }
@@ -251,6 +271,7 @@ function frame() {
 function reset() {
   t = newTracker();
   reps.length = 0; partials.length = 0; ignored.length = 0; series.length = 0; times.length = 0; lastVideoTime = -1;
+  diagonalHintGiven = false;
   $('count').textContent = '0'; $('reps').replaceChildren(); $('cue').textContent = '';
 }
 
@@ -331,6 +352,7 @@ function renderSet(set) {
     st.repCount + '회 · 평균 깊이 ' + Math.round(st.avgDepth * 100) + '% (낮을수록 깊음)',
     '후반 깊이 변화 ' + Math.round(st.depthChange * 100) + '%p · 후반 속도 변화 ' + Math.round(st.tempoChangePct) + '%',
     st.fadeFromRep ? st.fadeFromRep + '회째부터 깊이나 속도가 무너졌습니다' : '끝까지 일정했습니다',
+    st.kneeRatioChangePct == null ? null : '후반 무릎 간격 변화 ' + Math.round(st.kneeRatioChangePct) + '% (음수면 좁아진 것)',
   ])];
   if (set.emg) {
     out.push(card('근전도 요약 (시뮬레이션)', [

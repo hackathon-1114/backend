@@ -38,6 +38,18 @@ class SetAnalyzerTest {
     }
 
     @Test
+    void kneeSpacingChangeNeedsFrontViewReps() {
+        List<ExerciseSetRequest.Rep> front = new ArrayList<>();
+        for (double ratio : new double[] {1.30, 1.30, 1.28, 1.20, 1.10, 1.04}) {
+            front.add(new ExerciseSetRequest.Rep("front", 0.6, 1500, 3.0, 60.0, ratio, 0.02, List.of()));
+        }
+
+        assertThat(SetAnalyzer.analyze(front).kneeRatioChangePct()).isEqualTo(-17.7);
+        assertThat(SetAnalyzer.analyze(List.of(rep(0.5, 2000, 30.0, List.of()), rep(0.5, 2000, 30.0, List.of()),
+                rep(0.5, 2000, 30.0, List.of()))).kneeRatioChangePct()).isNull();
+    }
+
+    @Test
     void shortSetsNeverReportAFade() {
         assertThat(SetAnalyzer.analyze(List.of(rep(0.5, 2000, 30.0, List.of()), rep(0.7, 4000, 45.0, List.of()),
                 rep(0.7, 4000, 45.0, List.of()))).fadeFromRep()).isNull();

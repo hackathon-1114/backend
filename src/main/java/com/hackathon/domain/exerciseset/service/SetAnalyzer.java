@@ -40,6 +40,9 @@ public final class SetAnalyzer {
             double leanChange,
             @Schema(description = "이 회차부터 깊이나 속도가 무너졌다. 1부터 센다. 무너지지 않았으면 null", example = "7")
             Integer fadeFromRep,
+            @Schema(description = "뒤 1/3의 무릎 간격 비율이 앞 1/3보다 몇 % 달라졌나. 음수면 뒤로 갈수록 무릎이 모인 것. "
+                    + "정면 촬영 반복이 3회 미만이면 null", example = "-14.0")
+            Double kneeRatioChangePct,
             @Schema(description = "관찰별 횟수", example = "{\"깊이 부족\": 3}")
             Map<String, Integer> findingCounts) {
     }
@@ -81,6 +84,7 @@ public final class SetAnalyzer {
                 round(firstDuration == 0 ? 0 : (mean(last, r -> r.durationMs()) / firstDuration - 1) * 100, 1),
                 round(mean(last, SetAnalyzer::lean) - mean(first, SetAnalyzer::lean), 1),
                 fadeFromRep(reps),
+                kneeRatioChangePct(reps),
                 counts);
     }
 
@@ -105,6 +109,19 @@ public final class SetAnalyzer {
             if (fadedRest * 2 > rest) return i + 1;
         }
         return null;
+    }
+
+    /**
+     * 무릎 간격의 절대 기준(발목 간격의 80% 미만)은 검증하지 못했다. 대신 같은 사람의 세트 안에서
+     * 뒤로 갈수록 무릎 간격이 좁아지는지를 본다. 반복 간 변화는 절대값보다 안정적으로 잡힌다.
+     */
+    static Double kneeRatioChangePct(List<ExerciseSetRequest.Rep> reps) {
+        List<Double> ratios = reps.stream().map(ExerciseSetRequest.Rep::kneeRatio).filter(v -> v != null && v > 0).toList();
+        if (ratios.size() < 3) return null;
+        int third = Math.max(1, ratios.size() / 3);
+        double first = ratios.subList(0, third).stream().mapToDouble(Double::doubleValue).average().orElse(0);
+        double last = ratios.subList(ratios.size() - third, ratios.size()).stream().mapToDouble(Double::doubleValue).average().orElse(0);
+        return first == 0 ? null : round((last / first - 1) * 100, 1);
     }
 
     public static Emg analyzeEmg(List<ExerciseSetRequest.Muscle> muscles, String targetMuscle, boolean simulated) {

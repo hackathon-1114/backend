@@ -48,6 +48,7 @@ public class ExerciseSetService {
             - 반복이 진행되며 달라진 점(깊이, 속도, 상체 기울기)이 있으면 몇 회째부터인지 짚는다. 달라진 점이 없으면 일정했다고 말한다.
             - "끝까지 일정"이나 "N회째부터 흐트러짐"은 서버가 정한 기준으로 낸 판정이다. 이 판정을 뒤집지 않는다. 기준에 못 미치는 작은 변화는 "소폭"이라고만 말한다.
             - 더 깊이 앉게 된 것은 문제로 다루지 않는다.
+            - "후반 무릎 간격 변화"는 정면 촬영에서만 나온다. 음수면 뒤로 갈수록 무릎 사이가 좁아진 것이다. 10% 넘게 좁아졌을 때만 무릎이 안으로 모이는 경향으로 언급한다.
             - observations의 possibleLoad에는 그 움직임이 이어질 때 부담이 실릴 수 있는 부위를 "~에 부담이 실릴 수 있습니다"처럼 가능성으로만 쓴다. 변화가 뚜렷하지 않거나 해당 사항이 없으면 빈 문자열로 둔다.
             - 통증이나 부상을 예측하거나 진단하지 않는다.
             - 인바디나 문진 정보가 있으면 세트 수치와 같은 방향인지 연결해 설명한다. 인바디만으로 자세를 판단하지 않는다.
@@ -127,6 +128,9 @@ public class ExerciseSetService {
                 .append(" | 후반 깊이 변화 ").append(signed(Math.round(s.depthChange() * 100))).append("%p")
                 .append(" | 후반 속도 변화 ").append(signed(Math.round(s.tempoChangePct()))).append('%')
                 .append(" | 후반 상체 기울기 변화 ").append(signed(Math.round(s.leanChange()))).append("도");
+        if (s.kneeRatioChangePct() != null) {
+            sb.append(" | 후반 무릎 간격 변화 ").append(signed(Math.round(s.kneeRatioChangePct()))).append('%');
+        }
         sb.append(s.fadeFromRep() == null ? " | 끝까지 일정" : " | " + s.fadeFromRep() + "회째부터 흐트러짐");
         if (!s.findingCounts().isEmpty()) {
             sb.append(" | 관찰: ").append(s.findingCounts().entrySet().stream()
@@ -140,11 +144,11 @@ public class ExerciseSetService {
         StringBuilder sb = new StringBuilder("이번 세트\n").append(line(set)).append("\n\n반복별 수치\n");
         for (int i = 0; i < reps.size(); i++) {
             ExerciseSetRequest.Rep r = reps.get(i);
-            sb.append(i + 1).append("회 | ").append("front".equals(r.view()) ? "정면" : "측면")
+            sb.append(i + 1).append("회 | ").append("front".equals(r.view()) ? "정면" : "diagonal".equals(r.view()) ? "비스듬(자세 관찰 없음)" : "측면")
                     .append(" | 깊이 ").append(Math.round(r.depth() * 100)).append('%')
                     .append(" | ").append(String.format("%.1f", r.durationMs() / 1000.0)).append("초");
             if (r.maxLean() != null) sb.append(" | 상체 기울기 ").append(Math.round(r.maxLean())).append("도");
-            if (r.thighAngle() != null && !"front".equals(r.view())) {
+            if (r.thighAngle() != null && "side".equals(r.view())) {
                 sb.append(" | 허벅지 각도 ").append(Math.round(r.thighAngle())).append("도(수평이 0)");
             }
             if (r.kneeRatio() != null) sb.append(" | 무릎/발목 간격 ").append(String.format("%.2f", r.kneeRatio()));
