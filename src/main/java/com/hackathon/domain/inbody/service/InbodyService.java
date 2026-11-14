@@ -12,6 +12,7 @@ import com.hackathon.global.error.ErrorCode;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -22,29 +23,28 @@ import org.springframework.stereotype.Service;
 public class InbodyService {
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
-    private static final List<String> NUMBERS = List.of("weightKg", "skeletalMuscleKg", "bodyFatPercent",
+    private static final List<String> NUMBERS = List.of("weightKg", "skeletalMuscleKg", "bodyFatPercent", "bmi",
             "rightArmKg", "leftArmKg", "trunkKg", "rightLegKg", "leftLegKg");
 
     private static final String SYSTEM = """
             인바디(체성분 분석) 결과지 사진에서 수치를 읽는다.
-            - 체중, 골격근량, 체지방률을 읽는다.
+            - 체중, 골격근량, 체지방률, BMI를 읽는다.
             - 부위별 근육분석(Segmental Lean Analysis)의 오른팔, 왼팔, 몸통, 오른다리, 왼다리 값을 kg로 읽는다. 막대 옆에 적힌 숫자를 쓴다.
             - 읽을 수 없거나 사진에 없는 값은 -1로 둔다. 추측해서 채우지 않는다.
             - 측정일이 보이면 measuredAt에 YYYY-MM-DD로 쓰고, 안 보이면 빈 문자열로 둔다.
             - 사진이 인바디 결과지가 아니면 readable을 false로 두고 나머지는 -1로 둔다.
             """;
 
-    private static final Map<String, Object> SCHEMA = Map.of("properties", Map.of(
-            "readable", Map.of("type", "boolean"),
-            "measuredAt", Map.of("type", "string"),
-            "weightKg", Map.of("type", "number"),
-            "skeletalMuscleKg", Map.of("type", "number"),
-            "bodyFatPercent", Map.of("type", "number"),
-            "rightArmKg", Map.of("type", "number"),
-            "leftArmKg", Map.of("type", "number"),
-            "trunkKg", Map.of("type", "number"),
-            "rightLegKg", Map.of("type", "number"),
-            "leftLegKg", Map.of("type", "number")));
+    /** Map.of는 10쌍까지만 받아서 숫자 필드는 목록에서 만든다 */
+    private static final Map<String, Object> SCHEMA = schema();
+
+    private static Map<String, Object> schema() {
+        Map<String, Object> properties = new LinkedHashMap<>();
+        properties.put("readable", Map.of("type", "boolean"));
+        properties.put("measuredAt", Map.of("type", "string"));
+        NUMBERS.forEach(key -> properties.put(key, Map.of("type", "number")));
+        return Map.of("properties", properties);
+    }
 
     private final InbodyRepository inbodyRepository;
     private final AiService aiService;
@@ -55,7 +55,7 @@ public class InbodyService {
             InbodyRequest.Values v = req.values();
             return save(InbodyRecord.builder().userId(userId).source("manual")
                     .measuredAt(req.measuredAt() != null ? req.measuredAt() : today)
-                    .weightKg(v.weightKg()).skeletalMuscleKg(v.skeletalMuscleKg()).bodyFatPercent(v.bodyFatPercent())
+                    .weightKg(v.weightKg()).skeletalMuscleKg(v.skeletalMuscleKg()).bodyFatPercent(v.bodyFatPercent()).bmi(v.bmi())
                     .rightArmKg(v.rightArmKg()).leftArmKg(v.leftArmKg()).trunkKg(v.trunkKg())
                     .rightLegKg(v.rightLegKg()).leftLegKg(v.leftLegKg()).build());
         }
@@ -75,7 +75,7 @@ public class InbodyService {
         return save(InbodyRecord.builder().userId(userId).source("photo")
                 .measuredAt(req.measuredAt() != null ? req.measuredAt() : parseDate(r.path("measuredAt").asText(""), today))
                 .weightKg(number(r, "weightKg")).skeletalMuscleKg(number(r, "skeletalMuscleKg"))
-                .bodyFatPercent(number(r, "bodyFatPercent"))
+                .bodyFatPercent(number(r, "bodyFatPercent")).bmi(number(r, "bmi"))
                 .rightArmKg(number(r, "rightArmKg")).leftArmKg(number(r, "leftArmKg")).trunkKg(number(r, "trunkKg"))
                 .rightLegKg(number(r, "rightLegKg")).leftLegKg(number(r, "leftLegKg")).build());
     }
@@ -86,7 +86,7 @@ public class InbodyService {
      */
     public static InbodyRecord sample(Long userId, LocalDate measuredAt) {
         return InbodyRecord.builder().userId(userId).source("sample").measuredAt(measuredAt)
-                .weightKg(68.4).skeletalMuscleKg(30.1).bodyFatPercent(18.5)
+                .weightKg(68.5).skeletalMuscleKg(29.4).bodyFatPercent(22.1).bmi(23.5)
                 .rightArmKg(3.0).leftArmKg(2.9).trunkKg(24.2).rightLegKg(9.3).leftLegKg(8.6).build();
     }
 
@@ -104,6 +104,7 @@ public class InbodyService {
         append(sb, "체중", r.weightKg(), "kg");
         append(sb, "골격근량", r.skeletalMuscleKg(), "kg");
         append(sb, "체지방률", r.bodyFatPercent(), "%");
+        append(sb, "BMI", r.bmi(), "");
         append(sb, "오른팔 근육량", r.rightArmKg(), "kg");
         append(sb, "왼팔 근육량", r.leftArmKg(), "kg");
         append(sb, "몸통 근육량", r.trunkKg(), "kg");

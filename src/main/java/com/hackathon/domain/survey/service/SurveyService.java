@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 public class SurveyService {
 
     private static final TypeReference<List<SurveyRequest.Discomfort>> DISCOMFORTS = new TypeReference<>() { };
+    private static final TypeReference<List<String>> STRINGS = new TypeReference<>() { };
 
     private final SurveyRepository surveyRepository;
     private final Json json;
@@ -28,6 +29,9 @@ public class SurveyService {
                 .experience(req.experience())
                 .discomfortsJson(json.write(req.discomforts() == null ? List.of() : req.discomforts()))
                 .memo(req.memo())
+                .sittingHours(req.sittingHours())
+                .weeklyWorkouts(req.weeklyWorkouts())
+                .bodyHabitsJson(json.write(req.bodyHabits() == null ? List.of() : req.bodyHabits()))
                 .build()));
     }
 
@@ -42,6 +46,10 @@ public class SurveyService {
             StringBuilder sb = new StringBuilder("\n사용자 문진 (본인이 직접 적은 내용)\n");
             if (notBlank(s.getGoal())) sb.append("목표: ").append(s.getGoal()).append('\n');
             if (notBlank(s.getExperience())) sb.append("경력: ").append(s.getExperience()).append('\n');
+            if (notBlank(s.getSittingHours())) sb.append("하루 평균 앉아 있는 시간: ").append(s.getSittingHours()).append('\n');
+            if (s.getWeeklyWorkouts() != null) sb.append("주당 운동 횟수: ").append(s.getWeeklyWorkouts()).append("회\n");
+            List<String> habits = json.read(s.getBodyHabitsJson(), STRINGS);
+            if (habits != null && !habits.isEmpty()) sb.append("신체 사용 습관: ").append(String.join(", ", habits)).append('\n');
             List<SurveyRequest.Discomfort> list = json.read(s.getDiscomfortsJson(), DISCOMFORTS);
             if (list == null || list.isEmpty()) {
                 sb.append("불편함: 없다고 답함\n");
@@ -60,8 +68,9 @@ public class SurveyService {
 
     private SurveyResponse toResponse(Survey s) {
         List<SurveyRequest.Discomfort> list = json.read(s.getDiscomfortsJson(), DISCOMFORTS);
+        List<String> habits = json.read(s.getBodyHabitsJson(), STRINGS);
         return new SurveyResponse(s.getId(), s.getGoal(), s.getExperience(), list == null ? List.of() : list,
-                s.getMemo(), s.getCreatedAt());
+                s.getMemo(), s.getSittingHours(), s.getWeeklyWorkouts(), habits == null ? List.of() : habits, s.getCreatedAt());
     }
 
     private static boolean notBlank(String v) {

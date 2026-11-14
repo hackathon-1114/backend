@@ -38,8 +38,23 @@ public class Survey extends BaseTimeEntity {
     @Column(length = 500)
     private String memo;
 
+    /** 하루 평균 앉아 있는 시간. 예: 4~8시간 */
+    @Column(length = 20)
+    private String sittingHours;
+
+    /** 주당 운동 횟수 */
+    private Integer weeklyWorkouts;
+
+    /** 신체 사용 습관 (JSON 문자열 배열). 예: ["다리를 자주 꼰다"] */
+    @Column(columnDefinition = "TEXT")
+    private String bodyHabitsJson;
+
     @Builder
-    public Survey(Long userId, String goal, String experience, String discomfortsJson, String memo) {
+    public Survey(Long userId, String goal, String experience, String discomfortsJson, String memo,
+                  String sittingHours, Integer weeklyWorkouts, String bodyHabitsJson) {
+        this.sittingHours = sittingHours;
+        this.weeklyWorkouts = weeklyWorkouts;
+        this.bodyHabitsJson = bodyHabitsJson;
         this.userId = userId;
         this.goal = goal;
         this.experience = experience;

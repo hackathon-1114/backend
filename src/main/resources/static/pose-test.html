@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>실시간 스쿼트 추적 시험</title>
+<title>MUSCLE MAP 카메라</title>
 <style>
   body { font-family: -apple-system, "Apple SD Gothic Neo", sans-serif; max-width: 760px; margin: 16px auto; padding: 0 12px; color: #111; }
   h1 { font-size: 20px; }
@@ -24,7 +24,7 @@
 </head>
 <body>
 <p id="back" class="muted" hidden><a href="/">← 처음 화면으로</a></p>
-<h1>실시간 스쿼트 추적 시험 페이지</h1>
+<h1>AI 카메라 인식</h1>
 <p class="muted">MediaPipe가 브라우저 안에서 관절을 추적합니다. 영상은 서버로 보내지 않습니다. 휴대폰을 세워 두고 2~3m 떨어져 전신이 보이게 서세요. 옆에서 찍으면 깊이와 상체 기울기를, 정면에서 찍으면 무릎 모임과 좌우 쏠림을 봅니다.</p>
 
 <div class="row">
@@ -364,6 +364,12 @@ function renderSet(set) {
     out.push(card('AI 설명', [set.feedback.summary]));
     set.feedback.observations.forEach(o => out.push(card(o.title, [o.evidence, o.possibleLoad])));
     out.push(card('다음 세트에서', set.feedback.suggestions.map(x => '· ' + x)));
+    if (set.feedback.exercises && set.feedback.exercises.length) {
+      out.push(card('맞춤 운동', set.feedback.exercises.map(x => '· ' + x.name + ': ' + x.reason)));
+    }
+    if (set.feedback.retestGoals && set.feedback.retestGoals.length) {
+      out.push(card('재측정 목표', set.feedback.retestGoals.map(x => '· ' + x)));
+    }
   } else {
     out.push(card('AI 설명', ['작성 중... (3~12초)']));
   }

@@ -12,6 +12,7 @@ public record InbodyResponse(
         Double weightKg,
         Double skeletalMuscleKg,
         Double bodyFatPercent,
+        Double bmi,
         Double rightArmKg,
         Double leftArmKg,
         Double trunkKg,
@@ -26,7 +27,7 @@ public record InbodyResponse(
 
     public static InbodyResponse from(InbodyRecord r) {
         return new InbodyResponse(r.getId(), r.getMeasuredAt(), r.getSource(), r.getWeightKg(), r.getSkeletalMuscleKg(),
-                r.getBodyFatPercent(), r.getRightArmKg(), r.getLeftArmKg(), r.getTrunkKg(), r.getRightLegKg(),
+                r.getBodyFatPercent(), r.getBmi(), r.getRightArmKg(), r.getLeftArmKg(), r.getTrunkKg(), r.getRightLegKg(),
                 r.getLeftLegKg(), diffPct(r.getRightArmKg(), r.getLeftArmKg()), diffPct(r.getRightLegKg(), r.getLeftLegKg()),
                 weaker(r.getRightLegKg(), r.getLeftLegKg()));
     }

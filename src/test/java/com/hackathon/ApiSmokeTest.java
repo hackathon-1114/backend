@@ -180,6 +180,7 @@ class ApiSmokeTest {
         mvc.perform(post("/api/inbody").header("X-User-Id", "9").contentType(MediaType.APPLICATION_JSON).content("{\"sample\":true}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.source").value("sample"))
+                .andExpect(jsonPath("$.data.bmi").value(23.5))
                 .andExpect(jsonPath("$.data.leftLegKg").value(8.6));
 
         mvc.perform(post("/api/inbody").header("X-User-Id", "8").contentType(MediaType.APPLICATION_JSON)
@@ -201,10 +202,29 @@ class ApiSmokeTest {
     }
 
     @Test
+    void bodyAlertNeedsInbodyOrSurveyAndAnAiKey() throws Exception {
+        mvc.perform(post("/api/body-alerts/analyze").header("X-User-Id", "777"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BODYALERT400"));
+
+        // 시드 유저는 인바디와 문진이 있어 AI 호출까지 간다. 테스트에는 키가 없으므로 503
+        mvc.perform(post("/api/body-alerts/analyze").header("X-User-Id", "1"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("AI503"));
+
+        mvc.perform(get("/api/body-alerts/latest").header("X-User-Id", "1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("BODYALERT404"));
+    }
+
+    @Test
     void surveyLatestWins() throws Exception {
         mvc.perform(get("/api/surveys/latest").header("X-User-Id", "1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.discomforts[0].bodyPart").value("왼쪽 무릎"));
+                .andExpect(jsonPath("$.data.discomforts[0].bodyPart").value("왼쪽 무릎"))
+                .andExpect(jsonPath("$.data.sittingHours").value("8시간 이상"))
+                .andExpect(jsonPath("$.data.weeklyWorkouts").value(3))
+                .andExpect(jsonPath("$.data.bodyHabits[0]").value("한쪽 다리에 체중을 싣는다"));
 
         mvc.perform(get("/api/surveys/latest").header("X-User-Id", "55"))
                 .andExpect(status().isNotFound())

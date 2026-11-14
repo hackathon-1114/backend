@@ -9,5 +9,8 @@ public record SurveyResponse(
         String experience,
         List<SurveyRequest.Discomfort> discomforts,
         String memo,
+        String sittingHours,
+        Integer weeklyWorkouts,
+        List<String> bodyHabits,
         LocalDateTime createdAt) {
 }

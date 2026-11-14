@@ -35,6 +35,7 @@ public class InbodyRecord extends BaseTimeEntity {
     private Double weightKg;
     private Double skeletalMuscleKg;
     private Double bodyFatPercent;
+    private Double bmi;
     private Double rightArmKg;
     private Double leftArmKg;
     private Double trunkKg;
@@ -43,7 +44,7 @@ public class InbodyRecord extends BaseTimeEntity {
 
     @Builder
     public InbodyRecord(Long userId, LocalDate measuredAt, String source, Double weightKg, Double skeletalMuscleKg,
-                        Double bodyFatPercent, Double rightArmKg, Double leftArmKg, Double trunkKg,
+                        Double bodyFatPercent, Double bmi, Double rightArmKg, Double leftArmKg, Double trunkKg,
                         Double rightLegKg, Double leftLegKg) {
         this.userId = userId;
         this.measuredAt = measuredAt;
@@ -51,6 +52,7 @@ public class InbodyRecord extends BaseTimeEntity {
         this.weightKg = weightKg;
         this.skeletalMuscleKg = skeletalMuscleKg;
         this.bodyFatPercent = bodyFatPercent;
+        this.bmi = bmi;
         this.rightArmKg = rightArmKg;
         this.leftArmKg = leftArmKg;
         this.trunkKg = trunkKg;

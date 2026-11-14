@@ -66,6 +66,8 @@ public class SeedData implements ApplicationRunner {
         if (surveyRepository.count() == 0) {
             surveyRepository.save(Survey.builder().userId(1L).goal("하체 근력 강화").experience("헬스 6개월")
                     .discomfortsJson("[{\"bodyPart\":\"왼쪽 무릎\",\"situation\":\"계단을 내려갈 때\",\"level\":3}]")
+                    .sittingHours("8시간 이상").weeklyWorkouts(3)
+                    .bodyHabitsJson("[\"한쪽 다리에 체중을 싣는다\",\"다리를 자주 꼰다\"]")
                     .build());
         }
     }

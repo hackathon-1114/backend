@@ -28,6 +28,8 @@ public enum ErrorCode {
     INBODY_NOT_READABLE(HttpStatus.UNPROCESSABLE_ENTITY, "INBODY422",
             "사진에서 인바디 수치를 읽지 못했습니다. 결과지 전체가 선명하게 보이게 다시 찍어 주세요."),
     SURVEY_NOT_FOUND(HttpStatus.NOT_FOUND, "SURVEY404", "작성한 문진이 없습니다."),
+    BODYALERT_NOT_ENOUGH_DATA(HttpStatus.BAD_REQUEST, "BODYALERT400", "인바디나 문진 중 하나는 먼저 입력해 주세요."),
+    BODYALERT_NOT_FOUND(HttpStatus.NOT_FOUND, "BODYALERT404", "아직 사전 분석을 실행하지 않았습니다."),
     AI_NOT_CONFIGURED(HttpStatus.SERVICE_UNAVAILABLE, "AI503", "ANTHROPIC_API_KEY가 설정되지 않았습니다."),
     AI_RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "AI429", "AI 요청이 너무 많습니다. 잠시 후 다시 시도하세요."),
     AI_REFUSED(HttpStatus.UNPROCESSABLE_ENTITY, "AI422", "AI가 이 요청에 답변하지 않았습니다."),

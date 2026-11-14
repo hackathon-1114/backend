@@ -22,7 +22,20 @@ public record ExerciseSetResponse(
             String summary,
             List<Observation> observations,
             @Schema(description = "다음 세트에서 해볼 행동")
-            List<String> suggestions) {
+            List<String> suggestions,
+            @Schema(description = "이 사람의 측정 결과에 맞춘 보완 운동 2~3개")
+            List<Exercise> exercises,
+            @Schema(description = "다음 측정에서 달라졌는지 확인할 것")
+            List<String> retestGoals) {
+    }
+
+    public record Exercise(
+            @Schema(description = "운동 이름", example = "고블릿 스쿼트")
+            String name,
+            @Schema(description = "이 사람에게 권하는 이유. 측정 수치를 근거로 든다")
+            String reason,
+            @Schema(description = "방법 한두 문장")
+            String how) {
     }
 
     public record Observation(

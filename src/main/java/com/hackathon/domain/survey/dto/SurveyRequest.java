@@ -18,7 +18,13 @@ public class SurveyRequest {
             @Schema(description = "불편함을 느끼는 부위와 상황. 없으면 빈 배열")
             @Size(max = 10) List<@Valid Discomfort> discomforts,
             @Schema(description = "그 밖에 알리고 싶은 것", example = "오른쪽 발목을 작년에 삔 적이 있음")
-            @Size(max = 500) String memo) {
+            @Size(max = 500) String memo,
+            @Schema(description = "하루 평균 앉아 있는 시간. 2시간 미만 / 2~4시간 / 4~8시간 / 8시간 이상", example = "4~8시간")
+            @Size(max = 20) String sittingHours,
+            @Schema(description = "주당 운동 횟수", example = "3")
+            @Min(0) @Max(21) Integer weeklyWorkouts,
+            @Schema(description = "신체 사용 습관", example = "[\"다리를 자주 꼰다\", \"한쪽 다리에 체중을 싣는다\"]")
+            @Size(max = 10) List<@Size(max = 50) String> bodyHabits) {
     }
 
     public record Discomfort(

@@ -3,41 +3,50 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>움직임 패턴 코치 (시연용)</title>
+<title>MUSCLE MAP</title>
 <style>
-  :root { --line: #e2e2e2; --ink: #111; --sub: #666; --accent: #1d4ed8; --warn: #b45309; }
+  :root { --line: #e2e2e2; --ink: #111; --sub: #666; --accent: #2f5d50; --soft: #e6efe9; --warn: #b45309; }
   * { box-sizing: border-box; }
   body { font-family: -apple-system, "Apple SD Gothic Neo", sans-serif; margin: 0; color: var(--ink); background: #fafafa; }
   header { padding: 14px 16px 0; max-width: 760px; margin: 0 auto; }
-  h1 { font-size: 20px; margin: 0 0 4px; }
+  h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: .5px; }
   .sub { color: var(--sub); font-size: 13px; }
-  nav { display: flex; gap: 4px; max-width: 760px; margin: 12px auto 0; padding: 0 12px; border-bottom: 1px solid var(--line); overflow-x: auto; }
-  nav button { flex: 1; min-width: 78px; padding: 10px 6px; font-size: 14px; border: 0; background: none; border-bottom: 3px solid transparent; cursor: pointer; color: var(--sub); }
+  nav { display: flex; gap: 2px; max-width: 760px; margin: 12px auto 0; padding: 0 8px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+  nav button { flex: 1; min-width: 68px; padding: 10px 4px; font-size: 13px; border: 0; background: none; border-bottom: 3px solid transparent; cursor: pointer; color: var(--sub); white-space: nowrap; }
   nav button.on { border-color: var(--accent); color: var(--ink); font-weight: 700; }
   main { max-width: 760px; margin: 0 auto; padding: 16px; }
   section { display: none; }
   section.on { display: block; }
-  h2 { font-size: 17px; margin: 0 0 4px; }
+  .step { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; letter-spacing: 1px; color: var(--sub); font-weight: 700; }
+  h2 { font-size: 19px; margin: 6px 0 4px; }
+  h3 { font-size: 15px; margin: 18px 0 6px; }
   label { display: block; font-size: 13px; color: #444; margin: 12px 0 4px; }
-  input[type=text], input[type=number], select { width: 100%; font-size: 16px; padding: 9px; border: 1px solid #bbb; border-radius: 6px; background: #fff; }
+  input[type=text], input[type=number], select { width: 100%; font-size: 16px; padding: 9px; border: 1px solid #bbb; border-radius: 8px; background: #fff; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  button.go { margin-top: 14px; font-size: 16px; padding: 11px 16px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer; }
-  button.plain { margin-top: 14px; font-size: 15px; padding: 10px 14px; border: 1px solid #bbb; border-radius: 8px; background: #fff; cursor: pointer; }
+  .chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .chips button { font-size: 15px; padding: 12px 8px; border: 1px solid #ccc; border-radius: 10px; background: #fff; cursor: pointer; }
+  .chips button.on { border-color: var(--accent); background: var(--soft); font-weight: 700; }
+  button.go { margin-top: 16px; width: 100%; font-size: 16px; padding: 13px 16px; border: 0; border-radius: 10px; background: var(--accent); color: #fff; cursor: pointer; }
+  button.plain { margin-top: 12px; font-size: 15px; padding: 10px 14px; border: 1px solid #bbb; border-radius: 10px; background: #fff; cursor: pointer; }
   button:disabled { opacity: .5; }
-  .card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-top: 12px; }
   .card strong { display: block; margin-bottom: 4px; }
-  .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: #fef3c7; color: var(--warn); margin-left: 6px; vertical-align: middle; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 400; padding: 2px 8px; border-radius: 999px; background: #fef3c7; color: var(--warn); margin-left: 6px; vertical-align: middle; }
   .msg { margin-top: 10px; font-size: 14px; color: var(--warn); min-height: 20px; }
+  .grid4 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; margin-top: 6px; }
+  .grid4 small { color: var(--sub); display: block; }
+  .grid4 b { font-size: 24px; }
   table { border-collapse: collapse; width: 100%; font-size: 14px; margin-top: 8px; }
   td, th { border-bottom: 1px solid var(--line); padding: 6px 4px; text-align: left; }
   td.num { text-align: right; }
-  iframe { width: 100%; height: 1500px; border: 1px solid var(--line); border-radius: 10px; background: #fff; margin-top: 12px; }
+  ul { margin: 4px 0 0; padding-left: 20px; }
+  iframe { width: 100%; height: 1500px; border: 1px solid var(--line); border-radius: 12px; background: #fff; margin-top: 12px; }
 </style>
 </head>
 <body>
 <header>
-  <h1>움직임 패턴 코치 <span class="tag">시연용 화면</span></h1>
-  <div class="sub">문진과 체성분, 카메라로 잰 움직임을 엮어 반복 중에 나타나는 변화를 찾습니다. 인바디와 근전도는 가상 데이터입니다.</div>
+  <h1>MUSCLE MAP</h1>
+  <div class="sub">내 몸의 숨겨진 운동 패턴을 발견하고, 나에게 맞는 운동 방향을 찾아 줍니다.</div>
   <label for="user">사용자</label>
   <select id="user">
     <option value="1">예시 사용자 (5주치 기록 있음)</option>
@@ -46,41 +55,17 @@
 </header>
 
 <nav>
-  <button data-tab="survey" class="on">① 문진</button>
-  <button data-tab="inbody">② 인바디</button>
-  <button data-tab="camera">③ 카메라</button>
-  <button data-tab="pattern">④ 패턴</button>
+  <button data-tab="inbody" class="on">01 인바디</button>
+  <button data-tab="survey">02 문진</button>
+  <button data-tab="alert">03 문제 제안</button>
+  <button data-tab="camera">04 AI 카메라</button>
+  <button data-tab="result">05 결과</button>
 </nav>
 
 <main>
-  <section id="survey" class="on">
-    <h2>사용자 문진</h2>
-    <div class="sub">어떤 동작에서 불편함을 느끼는지 적어 두면 움직임 측정값과 연결해 설명합니다.</div>
-    <label for="goal">운동 목표</label>
-    <input id="goal" type="text" maxlength="100" placeholder="예: 하체 근력 강화">
-    <label for="experience">운동 경력</label>
-    <input id="experience" type="text" maxlength="30" placeholder="예: 헬스 6개월">
-    <div class="two">
-      <div>
-        <label for="part">불편한 부위</label>
-        <select id="part">
-          <option value="">없음</option><option>왼쪽 무릎</option><option>오른쪽 무릎</option><option>허리</option>
-          <option>왼쪽 발목</option><option>오른쪽 발목</option><option>고관절</option><option>어깨</option>
-        </select>
-      </div>
-      <div>
-        <label for="level">정도 (0~10)</label>
-        <input id="level" type="number" min="0" max="10" value="3">
-      </div>
-    </div>
-    <label for="situation">어떤 상황에서</label>
-    <input id="situation" type="text" maxlength="100" placeholder="예: 계단을 내려갈 때">
-    <button class="go" id="saveSurvey" type="button">문진 저장</button>
-    <div class="msg" id="surveyMsg"></div>
-  </section>
-
-  <section id="inbody">
-    <h2>인바디 분석</h2>
+  <section id="inbody" class="on">
+    <div class="step"><span>BODY PROFILE</span><span>STEP 01 / 05</span></div>
+    <h2>나의 신체 데이터를 확인해 볼까요?</h2>
     <div class="sub">체성분과 부위별 근육량의 좌우 차이를 봅니다. 인바디만으로 자세를 판단하지는 않습니다.</div>
     <div id="inbodyView"></div>
     <button class="go" id="sampleInbody" type="button">가상 인바디 데이터 불러오기</button>
@@ -90,18 +75,69 @@
     </div>
     <button class="plain" id="manualInbody" type="button">직접 입력한 값 저장</button>
     <div class="msg" id="inbodyMsg"></div>
+    <button class="go" data-next="survey" type="button">다음: 문진</button>
+  </section>
+
+  <section id="survey">
+    <div class="step"><span>BODY CHECK</span><span>STEP 02 / 05</span></div>
+    <h2>평소 몸을 어떻게 사용하시나요?</h2>
+    <div class="sub">몇 가지 질문을 통해 신체 사용 습관을 알아볼게요.</div>
+    <h3>Q1. 하루 평균 앉아 있는 시간은?</h3>
+    <div class="chips" id="sitting" data-single>
+      <button type="button">2시간 미만</button><button type="button">2~4시간</button>
+      <button type="button">4~8시간</button><button type="button">8시간 이상</button>
+    </div>
+    <h3>Q2. 평소 불편함을 느끼는 부위는?</h3>
+    <div class="chips" id="parts">
+      <button type="button">어깨</button><button type="button">허리</button>
+      <button type="button">왼쪽 무릎</button><button type="button">오른쪽 무릎</button>
+      <button type="button">왼쪽 발목</button><button type="button">오른쪽 발목</button>
+      <button type="button">고관절</button><button type="button">목</button>
+    </div>
+    <label for="situation">어떤 상황에서 불편한가요 (선택)</label>
+    <input id="situation" type="text" maxlength="100" placeholder="예: 계단을 내려갈 때">
+    <h3>Q3. 주 몇 회 운동하시나요?</h3>
+    <input id="weekly" type="number" min="0" max="21" placeholder="3">
+    <h3>Q4. 해당하는 습관을 골라 주세요</h3>
+    <div class="chips" id="habits">
+      <button type="button">다리를 자주 꼰다</button><button type="button">한쪽 다리에 체중을 싣는다</button>
+      <button type="button">한쪽으로 가방을 멘다</button><button type="button">해당 없음</button>
+    </div>
+    <h3>Q5. 운동 목표는?</h3>
+    <div class="chips" id="goal" data-single>
+      <button type="button">자세 개선</button><button type="button">좌우 균형</button>
+      <button type="button">하체 근력 강화</button><button type="button">체력 향상</button>
+    </div>
+    <button class="go" id="saveSurvey" type="button">문진 저장하고 다음으로</button>
+    <div class="msg" id="surveyMsg"></div>
+  </section>
+
+  <section id="alert">
+    <div class="step"><span>BODY ALERT</span><span>STEP 03 / 05</span></div>
+    <h2>당신의 신체에서 확인하면 좋을 영역이 있어요.</h2>
+    <div class="sub">인바디와 생활 습관 문진을 종합한 사전 분석입니다. 아직 움직임을 재지 않았으므로 결론이 아니라 확인할 항목입니다.</div>
+    <button class="go" id="runAlert" type="button">사전 분석 실행 (약 10초)</button>
+    <div class="msg" id="alertMsg"></div>
+    <div id="alertView"></div>
+    <button class="go" data-next="camera" type="button">AI 카메라 분석 시작하기</button>
   </section>
 
   <section id="camera">
-    <h2>AI 카메라 인식</h2>
-    <div class="sub">휴대폰을 세워 두고 2~3m 떨어져 전신이 보이게 섭니다. 끝나면 정지를 누르고 "세트 저장하고 AI 설명 받기"를 누르세요.</div>
+    <div class="step"><span>AI CAMERA</span><span>STEP 04 / 05</span></div>
+    <h2>카메라로 실제 움직임을 확인합니다</h2>
+    <div class="sub">휴대폰을 세워 두고 2~3m 떨어져 전신이 보이게 섭니다. 스쿼트를 마치면 정지를 누르고 "세트 저장하고 AI 설명 받기"를 누른 뒤 05 결과로 가세요.</div>
     <a id="cameraLink" href="/pose-test.html"><button class="plain" type="button">카메라 화면만 크게 열기</button></a>
     <iframe id="cameraFrame" title="카메라 추적" allow="camera; autoplay"></iframe>
+    <button class="go" data-next="result" type="button">결과 보기</button>
   </section>
 
-  <section id="pattern">
-    <h2>움직임 변화 패턴</h2>
-    <div class="sub">쌓인 세트에서 반복되는 변화를 찾고, 문진과 인바디와 같은 방향인지 연결합니다. 통증을 예측하는 것이 아니라 부담이 실릴 수 있는 요인을 설명합니다.</div>
+  <section id="result">
+    <div class="step"><span>RESULT</span><span>STEP 05 / 05</span></div>
+    <h2>움직임 분석 결과</h2>
+    <div class="sub">반복이 진행되며 나타난 변화를 찾고, 문진과 인바디와 같은 방향인지 연결합니다. 통증을 예측하는 것이 아니라 부담이 실릴 수 있는 요인을 설명합니다.</div>
+    <div class="msg" id="resultMsg"></div>
+    <div id="latestSet"></div>
+    <h3>쌓인 기록에서 찾은 패턴</h3>
     <div id="sets"></div>
     <button class="go" id="analyze" type="button">패턴 분석 실행 (약 12초)</button>
     <div class="msg" id="patternMsg"></div>
@@ -147,48 +183,44 @@ function card(title, lines, tag) {
   return box;
 }
 
-// ── 문진 ──────────────────────────────────────────────────────────────────────────
-async function loadSurvey() {
-  $('surveyMsg').textContent = '';
-  ['goal', 'experience', 'situation'].forEach(id => { $(id).value = ''; });
-  $('part').value = ''; $('level').value = 3;
-  try {
-    const s = await api('GET', '/api/surveys/latest');
-    $('goal').value = s.goal || ''; $('experience').value = s.experience || '';
-    const d = s.discomforts[0];
-    if (d) { $('part').value = d.bodyPart; $('situation').value = d.situation || ''; $('level').value = d.level ?? 3; }
-    $('surveyMsg').textContent = '저장된 문진을 불러왔습니다.';
-  } catch (e) { if (e.code !== 'SURVEY404') $('surveyMsg').textContent = e.message; }
+function list(items) {
+  const ul = el('ul');
+  items.forEach(text => ul.append(el('li', text)));
+  return ul;
 }
 
-$('saveSurvey').addEventListener('click', async () => {
-  const part = $('part').value;
-  try {
-    await api('POST', '/api/surveys', { goal: $('goal').value || null, experience: $('experience').value || null,
-      discomforts: part ? [{ bodyPart: part, situation: $('situation').value || null, level: Number($('level').value) }] : [] });
-    $('surveyMsg').textContent = '저장했습니다. 다음은 인바디입니다.';
-  } catch (e) { $('surveyMsg').textContent = e.message; }
-});
+// 고르는 버튼 묶음. data-single이 있으면 하나만 고른다
+document.querySelectorAll('.chips').forEach(group => group.addEventListener('click', e => {
+  if (e.target.tagName !== 'BUTTON') return;
+  if (group.hasAttribute('data-single')) group.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  e.target.classList.toggle('on');
+}));
+const picked = id => [...$(id).querySelectorAll('button.on')].map(b => b.textContent);
+const pick = (id, values) => $(id).querySelectorAll('button').forEach(b => b.classList.toggle('on', values.includes(b.textContent)));
 
-// ── 인바디 ────────────────────────────────────────────────────────────────────────
+// ── 01 인바디 ─────────────────────────────────────────────────────────────────────
 function showInbody(r) {
   const view = $('inbodyView');
   view.replaceChildren();
   if (!r) { view.append(card('저장된 인바디가 없습니다', ['아래에서 가상 데이터를 불러오거나 값을 직접 넣어 주세요.'])); return; }
-  const kg = v => v == null ? '-' : v + 'kg';
   const tag = r.source === 'sample' ? '가상 데이터' : r.source === 'photo' ? '사진에서 읽음' : '직접 입력';
   const box = card(r.measuredAt + ' 측정', [], tag);
-  const table = el('table');
-  [['체중', kg(r.weightKg)], ['골격근량', kg(r.skeletalMuscleKg)], ['체지방률', r.bodyFatPercent == null ? '-' : r.bodyFatPercent + '%'],
-   ['오른팔 / 왼팔', kg(r.rightArmKg) + ' / ' + kg(r.leftArmKg)], ['오른다리 / 왼다리', kg(r.rightLegKg) + ' / ' + kg(r.leftLegKg)]]
-    .forEach(([k, v]) => { const tr = el('tr'); tr.append(el('td', k), el('td', v, 'num')); table.append(tr); });
-  box.append(table);
+  const grid = el('div', null, 'grid4');
+  [['체중', r.weightKg, 'kg'], ['골격근량', r.skeletalMuscleKg, 'kg'], ['체지방률', r.bodyFatPercent, '%'], ['BMI', r.bmi, '']]
+    .forEach(([k, v, unit]) => { const d = el('div'); d.append(el('small', k), el('b', v == null ? '-' : v + ' ' + unit)); grid.append(d); });
+  box.append(grid);
   view.append(box);
+  const kg = v => v == null ? '-' : v + 'kg';
+  const seg = card('부위별 근육량', []);
+  const table = el('table');
+  [['오른팔 / 왼팔', kg(r.rightArmKg) + ' / ' + kg(r.leftArmKg)], ['몸통', kg(r.trunkKg)], ['오른다리 / 왼다리', kg(r.rightLegKg) + ' / ' + kg(r.leftLegKg)]]
+    .forEach(([k, v]) => { const tr = el('tr'); tr.append(el('td', k), el('td', v, 'num')); table.append(tr); });
+  seg.append(table);
   if (r.legDiffPct != null) {
-    view.append(card('다리 근육량 좌우 차이 ' + r.legDiffPct + '%', [
-      r.weakerLeg ? (r.weakerLeg === 'left' ? '왼쪽' : '오른쪽') + ' 다리의 근육량이 더 적습니다.' : '좌우가 같습니다.',
-      '이 차이가 실제 움직임에서도 나타나는지는 정면 카메라 세트에서 확인합니다.']));
+    seg.append(el('div', '다리 좌우 차이 ' + r.legDiffPct + '%. ' + (r.weakerLeg ? (r.weakerLeg === 'left' ? '왼쪽' : '오른쪽') + ' 다리의 근육량이 더 적습니다.' : '좌우가 같습니다.')));
   }
+  view.append(seg);
+  if (r.source === 'sample') view.append(el('div', '위 수치는 시연을 위한 가상 데이터입니다.', 'sub'));
 }
 
 async function loadInbody() {
@@ -208,16 +240,112 @@ $('manualInbody').addEventListener('click', async () => {
   catch (e) { $('inbodyMsg').textContent = e.message; }
 });
 
-// ── 패턴 ──────────────────────────────────────────────────────────────────────────
-function showInsights(list) {
-  $('insights').replaceChildren(...list.map(p => card(p.title, [p.evidence, '→ ' + p.suggestion])));
+// ── 02 문진 ───────────────────────────────────────────────────────────────────────
+async function loadSurvey() {
+  $('surveyMsg').textContent = '';
+  ['sitting', 'parts', 'habits', 'goal'].forEach(id => pick(id, []));
+  $('situation').value = ''; $('weekly').value = '';
+  try {
+    const s = await api('GET', '/api/surveys/latest');
+    pick('sitting', [s.sittingHours]); pick('goal', [s.goal]); pick('habits', s.bodyHabits);
+    pick('parts', s.discomforts.map(d => d.bodyPart));
+    $('situation').value = (s.discomforts[0] && s.discomforts[0].situation) || '';
+    $('weekly').value = s.weeklyWorkouts ?? '';
+    $('surveyMsg').textContent = '저장된 문진을 불러왔습니다.';
+  } catch (e) { if (e.code !== 'SURVEY404') $('surveyMsg').textContent = e.message; }
 }
 
-async function loadPattern() {
-  $('patternMsg').textContent = '';
+$('saveSurvey').addEventListener('click', async () => {
+  const situation = $('situation').value || null;
+  try {
+    await api('POST', '/api/surveys', {
+      goal: picked('goal')[0] || null,
+      sittingHours: picked('sitting')[0] || null,
+      weeklyWorkouts: $('weekly').value === '' ? null : Number($('weekly').value),
+      bodyHabits: picked('habits').filter(h => h !== '해당 없음'),
+      discomforts: picked('parts').map(bodyPart => ({ bodyPart, situation })),
+    });
+    open('alert');
+  } catch (e) { $('surveyMsg').textContent = e.message; }
+});
+
+// ── 03 문제 제안 ──────────────────────────────────────────────────────────────────
+function showAlert(a) {
+  const out = [card('사전 분석 요약', [a.summary])];
+  a.areas.forEach((area, i) => {
+    const box = card('주요 관찰 영역 0' + (i + 1) + ' · ' + area.title, [area.side + ' ' + area.bodyPart, area.reason], area.status);
+    box.append(el('strong', '확인하면 좋은 패턴'), list(area.checkPatterns));
+    out.push(box);
+  });
+  out.push(card('다음 단계에서 확인할 내용', [a.nextStep]));
+  $('alertView').replaceChildren(...out);
+}
+
+async function loadAlert() {
+  $('alertMsg').textContent = '';
+  $('alertView').replaceChildren();
+  try { showAlert(await api('GET', '/api/body-alerts/latest')); }
+  catch (e) { if (e.code !== 'BODYALERT404') $('alertMsg').textContent = e.message; }
+}
+
+$('runAlert').addEventListener('click', async () => {
+  $('runAlert').disabled = true;
+  $('alertMsg').textContent = '인바디와 문진을 함께 보는 중입니다...';
+  try { showAlert(await api('POST', '/api/body-alerts/analyze')); $('alertMsg').textContent = ''; }
+  catch (e) { $('alertMsg').textContent = e.message; }
+  finally { $('runAlert').disabled = false; }
+});
+
+// ── 05 결과 ───────────────────────────────────────────────────────────────────────
+function showSet(set) {
+  const st = set.stats;
+  const out = [card('이번 세트 · ' + set.exercise + ' ' + st.repCount + '회', [
+    '평균 깊이 ' + Math.round(st.avgDepth * 100) + '% (엉덩이 높이 비율이라 낮을수록 깊습니다)',
+    '후반 깊이 변화 ' + Math.round(st.depthChange * 100) + '%p · 후반 속도 변화 ' + Math.round(st.tempoChangePct) + '% · 후반 상체 기울기 변화 ' + Math.round(st.leanChange) + '도',
+    st.fadeFromRep ? st.fadeFromRep + '회째부터 깊이나 속도가 무너졌습니다' : '끝까지 일정했습니다',
+    st.kneeRatioChangePct == null ? null : '후반 무릎 간격 변화 ' + Math.round(st.kneeRatioChangePct) + '%',
+  ])];
+  if (set.emg) {
+    out.push(card('근육 활성 요약', [
+      set.emg.targetSharePct == null ? null : '목표 근육 비중 ' + set.emg.targetSharePct + '%',
+      ...set.emg.asymmetries.map(a => a.muscle + ' 좌우 차이 ' + a.diffPct + '%'),
+    ], set.emg.simulated ? '시뮬레이션' : null));
+  }
+  const f = set.feedback;
+  if (f) {
+    out.push(card('종합 분석', [f.summary]));
+    f.observations.forEach(o => out.push(card(o.title, [o.evidence, o.possibleLoad])));
+    if (f.exercises && f.exercises.length) {
+      const box = card('맞춤 운동', []);
+      f.exercises.forEach(x => box.append(el('strong', x.name), el('div', x.reason), el('div', x.how, 'sub')));
+      out.push(box);
+    }
+    if (f.retestGoals && f.retestGoals.length) { const box = card('재측정 목표', []); box.append(list(f.retestGoals)); out.push(box); }
+  } else {
+    const box = card('종합 분석', ['아직 AI 설명을 만들지 않았습니다.']);
+    const btn = el('button', 'AI 설명 만들기 (약 13초)', 'plain');
+    btn.type = 'button';
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try { showSet(await api('POST', '/api/sets/' + set.id + '/feedback')); } catch (e) { $('resultMsg').textContent = e.message; btn.disabled = false; }
+    });
+    box.append(btn);
+    out.push(box);
+  }
+  $('latestSet').replaceChildren(...out);
+}
+
+function showInsights(items) {
+  $('insights').replaceChildren(...items.map(p => card(p.title, [p.evidence, '→ ' + p.suggestion])));
+}
+
+async function loadResult() {
+  $('resultMsg').textContent = ''; $('patternMsg').textContent = '';
   try {
     const sets = await api('GET', '/api/sets');
-    const box = card('카메라 세트 기록 ' + sets.length + '건', sets.length ? [] : ['아직 없습니다. 카메라 탭에서 한 세트를 저장해 주세요.']);
+    if (sets.length) showSet(sets[0]);
+    else $('latestSet').replaceChildren(card('저장된 세트가 없습니다', ['04 AI 카메라에서 한 세트를 저장해 주세요.']));
+    const box = card('카메라 세트 기록 ' + sets.length + '건', []);
     if (sets.length) {
       const table = el('table');
       const head = el('tr'); ['일시', '횟수', '평균 깊이', '무너진 회차'].forEach(h => head.append(el('th', h)));
@@ -229,11 +357,11 @@ async function loadPattern() {
           el('td', s.stats.fadeFromRep ? s.stats.fadeFromRep + '회째부터' : '끝까지 일정'));
         table.append(tr);
       });
-      box.append(table, el('div', '깊이는 최저점의 엉덩이 높이 비율이라 낮을수록 깊이 앉은 것입니다.', 'sub'));
+      box.append(table);
     }
     $('sets').replaceChildren(box);
     showInsights(await api('GET', '/api/insights'));
-  } catch (e) { $('patternMsg').textContent = e.message; }
+  } catch (e) { $('resultMsg').textContent = e.message; }
 }
 
 $('analyze').addEventListener('click', async () => {
@@ -244,22 +372,24 @@ $('analyze').addEventListener('click', async () => {
   finally { $('analyze').disabled = false; }
 });
 
-// ── 탭과 사용자 전환 ───────────────────────────────────────────────────────────────
-const loaders = { survey: loadSurvey, inbody: loadInbody, pattern: loadPattern, camera: () => {
+// ── 단계 이동과 사용자 전환 ────────────────────────────────────────────────────────
+const loaders = { inbody: loadInbody, survey: loadSurvey, alert: loadAlert, result: loadResult, camera: () => {
   const url = '/pose-test.html?user=' + userId();
   $('cameraLink').href = url;
-  if ($('cameraFrame').getAttribute('src') !== url) $('cameraFrame').src = url;   // 탭을 벗어나도 카메라 화면은 유지
+  if ($('cameraFrame').getAttribute('src') !== url) $('cameraFrame').src = url;   // 단계를 오가도 카메라 화면은 유지
 } };
 
 function open(tab) {
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   document.querySelectorAll('section').forEach(s => s.classList.toggle('on', s.id === tab));
+  window.scrollTo(0, 0);
   loaders[tab]();
 }
 
 document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => open(b.dataset.tab)));
+document.querySelectorAll('[data-next]').forEach(b => b.addEventListener('click', () => open(b.dataset.next)));
 $('user').addEventListener('change', () => open(document.querySelector('nav button.on').dataset.tab));
-open('survey');
+open('inbody');
 </script>
 </body>
 </html>

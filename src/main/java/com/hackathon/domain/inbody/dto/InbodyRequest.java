@@ -24,7 +24,8 @@ public class InbodyRequest {
     public record Values(
             @Schema(description = "체중(kg)", example = "68.4") @Positive @Max(300) Double weightKg,
             @Schema(description = "골격근량(kg)", example = "30.1") @Positive @Max(100) Double skeletalMuscleKg,
-            @Schema(description = "체지방률(%)", example = "18.5") @Positive @Max(80) Double bodyFatPercent,
+            @Schema(description = "체지방률(%)", example = "22.1") @Positive @Max(80) Double bodyFatPercent,
+            @Schema(description = "BMI", example = "23.5") @Positive @Max(80) Double bmi,
             @Schema(description = "부위별 근육량, 오른팔(kg)", example = "3.0") @Positive @Max(20) Double rightArmKg,
             @Schema(description = "부위별 근육량, 왼팔(kg)", example = "2.9") @Positive @Max(20) Double leftArmKg,
             @Schema(description = "부위별 근육량, 몸통(kg)", example = "24.2") @Positive @Max(80) Double trunkKg,
