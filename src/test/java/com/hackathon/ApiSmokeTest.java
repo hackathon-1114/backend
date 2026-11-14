@@ -228,6 +228,24 @@ class ApiSmokeTest {
     }
 
     @Test
+    void overviewReturnsEverythingInOneCall() throws Exception {
+        mvc.perform(get("/api/overview").header("X-User-Id", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.sets.length()").value(3))
+                .andExpect(jsonPath("$.data.insights.length()").value(3))
+                .andExpect(jsonPath("$.data.inbody.source").value("sample"))
+                .andExpect(jsonPath("$.data.survey.sittingHours").value("8시간 이상"))
+                .andExpect(jsonPath("$.data.bodyAlert.areas.length()").value(3));
+
+        mvc.perform(get("/api/overview").header("X-User-Id", "4242"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.sets.length()").value(0))
+                .andExpect(jsonPath("$.data.inbody").doesNotExist())
+                .andExpect(jsonPath("$.data.survey").doesNotExist())
+                .andExpect(jsonPath("$.data.bodyAlert").doesNotExist());
+    }
+
+    @Test
     void surveyLatestWins() throws Exception {
         mvc.perform(get("/api/surveys/latest").header("X-User-Id", "1"))
                 .andExpect(status().isOk())

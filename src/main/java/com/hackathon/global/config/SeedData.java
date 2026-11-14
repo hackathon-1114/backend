@@ -229,7 +229,7 @@ public class SeedData implements ApplicationRunner {
                 "5회째부터 덜 앉고 느려졌습니다",
                 "1~4회는 같은 깊이로 앉았지만 5회째부터 얕아지고 느려지며 상체가 더 숙여졌습니다. 아침에 한 세트는 끝까지 일정했습니다.",
                 List.of(
-                        new ExerciseSetResponse.Observation("5회째부터 깊이가 얕아짐", "깊이가 50%에서 10회째 66%까지 올라갔습니다.", ""),
+                        new ExerciseSetResponse.Observation("5회째부터 덜 앉음", "앉은 깊이가 50%에서 10회째 34%까지 줄었습니다.", ""),
                         new ExerciseSetResponse.Observation("상체가 점점 숙여짐", "상체 기울기가 32도에서 47도로 커졌습니다.", "허리 주변에 부담이 실릴 수 있습니다."),
                         new ExerciseSetResponse.Observation("반복 속도가 느려짐", "한 회에 걸린 시간이 2.2초에서 3.6초로 늘었습니다.", "")),
                 List.of("다음 세트는 4회에서 끊고 충분히 쉬어 보세요.", "내려갈 때 가슴을 세우고 2초 리듬을 유지해 보세요."),
@@ -237,13 +237,13 @@ public class SeedData implements ApplicationRunner {
                         new ExerciseSetResponse.Exercise("고블릿 스쿼트", "상체 기울기가 15도 늘어 상체를 세워 버티는 연습이 필요합니다.", "가벼운 덤벨을 가슴 앞에 들고 상체를 세운 채 8회씩 3세트 합니다."),
                         new ExerciseSetResponse.Exercise("템포 박스 스쿼트", "5회째부터 깊이가 얕아져 같은 깊이를 끝까지 지키는 연습이 필요합니다.", "박스 높이까지 3초에 걸쳐 내려가 같은 깊이로 6회씩 반복합니다."),
                         new ExerciseSetResponse.Exercise("스플릿 스쿼트", "인바디에서 왼다리 근육량이 7.5% 적어 좌우를 따로 쓰는 운동이 도움이 됩니다.", "한쪽씩 8회, 왼다리부터 같은 횟수로 합니다.")),
-                List.of("10회째까지 깊이 55% 이하 유지", "후반 상체 기울기 변화 5도 이내", "후반 속도 변화 20% 이내"));
+                List.of("10회째까지 앉은 깊이 45% 이상 유지", "후반 상체 기울기 변화 5도 이내", "후반 속도 변화 20% 이내"));
     }
 
     private static List<Insight> demoInsights() {
         return List.of(
                 Insight.builder().userId(1L).title("야근 뒤 밤 스쿼트에서만 자세가 무너져요")
-                        .evidence("수요일 밤 9~10시에 한 세트 두 번은 5~6회째부터 깊이가 12~14%p 얕아지고 속도가 40% 넘게 느려졌습니다. 토요일 아침 7시 세트는 10회 내내 같았습니다.")
+                        .evidence("수요일 밤 9~10시에 한 세트 두 번은 5~6회째부터 앉은 깊이가 12~14%p 줄고 속도가 40% 넘게 느려졌습니다. 토요일 아침 7시 세트는 10회 내내 같았습니다.")
                         .suggestion("야근한 날에는 스쿼트를 4회씩 끊어서 하거나 토요일 아침으로 옮겨 보세요.").build(),
                 Insight.builder().userId(1L).title("무너지는 시점이 한 회 당겨졌어요")
                         .evidence("2주 전 밤 세트는 6회째부터, 지난주 밤 세트는 5회째부터 얕아졌습니다. 후반 속도 저하도 42%에서 52%로 커졌습니다.")

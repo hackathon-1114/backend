@@ -40,6 +40,10 @@ public class SurveyService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.SURVEY_NOT_FOUND)));
     }
 
+    public SurveyResponse findLatestOrNull(Long userId) {
+        return surveyRepository.findFirstByUserIdOrderByIdDesc(userId).map(this::toResponse).orElse(null);
+    }
+
     /** AI 프롬프트에 붙일 최신 문진 요약. 문진이 없으면 빈 문자열 */
     public String describeLatest(Long userId) {
         return surveyRepository.findFirstByUserIdOrderByIdDesc(userId).map(s -> {

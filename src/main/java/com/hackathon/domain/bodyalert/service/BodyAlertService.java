@@ -78,6 +78,10 @@ public class BodyAlertService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.BODYALERT_NOT_FOUND)));
     }
 
+    public BodyAlertResponse findLatestOrNull(Long userId) {
+        return bodyAlertRepository.findFirstByUserIdOrderByIdDesc(userId).map(this::toResponse).orElse(null);
+    }
+
     private BodyAlertResponse toResponse(BodyAlert a) {
         List<BodyAlertResponse.Area> areas = json.read(a.getAreasJson(), AREAS);
         return new BodyAlertResponse(a.getId(), a.getSummary(), areas == null ? List.of() : areas, a.getNextStep(), a.getCreatedAt());
