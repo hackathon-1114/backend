@@ -12,7 +12,7 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 
 `master`에 푸시하면 Railway가 1~2분 안에 자동 배포한다. 배포 주소는 https://hackathon-backend-production-967eabf5.up.railway.app 이다.
 
-변경 요청을 받으면 구현하고 `./gradlew test` 통과를 확인한 뒤, 묻지 않고 커밋해서 `origin/master`에 푸시한다. 푸시 후에는 배포 주소에서 바뀐 엔드포인트를 호출해 확인한다. 테스트가 실패하면 푸시하지 않고 보고한다. force push와 히스토리 수정은 하지 않는다.
+**지금은 푸시하지 않는다.** 푸시는 곧 배포라서, 사용자가 배포하자고 말할 때만 `origin/master`에 푸시한다 (2026-11-14 해커톤 중 결정, 프로젝트 막바지에 한 번에 배포할 예정). 그전까지는 변경 요청을 받으면 구현하고 `./gradlew test` 통과를 확인한 뒤 로컬에만 커밋하고, `localhost:8080`에서 바뀐 엔드포인트를 호출해 확인한다. 테스트가 실패하면 커밋하지 않고 보고한다. force push와 히스토리 수정은 하지 않는다.
 
 ## 새 도메인 추가
 
