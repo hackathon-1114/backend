@@ -4,8 +4,7 @@
 
 2026년 11월 14일 MEDILUX × 잇타 × UMC 하프 해커톤에서 4시간 동안 만들었습니다.
 
-- 써 보기 https://hackathon-backend-production-967eabf5.up.railway.app (폰에서 열면 카메라로 바로 측정됩니다)
-- API 문서 https://hackathon-backend-production-967eabf5.up.railway.app/swagger-ui.html
+- 배포 서버는 해커톤이 끝난 뒤 내렸습니다. 아래 [실행](#실행) 방법으로 로컬에서 띄울 수 있고, API 문서는 띄운 서버의 `/swagger-ui.html`에서 볼 수 있습니다
 - 화면 저장소 [hackathon-1114/frontend](https://github.com/hackathon-1114/frontend)
 
 ## 사용 흐름
@@ -26,7 +25,7 @@
 
 **AI는 설명만 합니다.** Claude는 계산된 수치를 받아 문장으로 풀고 보완 운동을 제안합니다. 영상을 보고 자세를 판정하지 않습니다. 비전 모델의 운동 자세 판정은 정확도가 낮다는 연구가 있어 이렇게 나눴습니다. 근거는 [검증 기록](docs/verification.md)에 있습니다.
 
-**서버는 단순합니다.** Spring Boot 3.5, Java 21, H2 인메모리 DB를 쓰고 Railway 싱가포르 리전에 올렸습니다. 화면은 빌드 도구 없는 정적 파일이고 서버가 함께 내려 줍니다. 로그인은 없고 `X-User-Id` 헤더로 사용자를 구분합니다.
+**서버는 단순합니다.** Spring Boot 3.5, Java 21, H2 인메모리 DB를 쓰고, 해커톤 동안 Railway 싱가포르 리전에 올려 시연했습니다. 화면은 빌드 도구 없는 정적 파일이고 서버가 함께 내려 줍니다. 로그인은 없고 `X-User-Id` 헤더로 사용자를 구분합니다.
 
 ```
 폰 브라우저                               서버 (Spring Boot)
